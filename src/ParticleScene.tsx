@@ -109,7 +109,7 @@ export function ParticleScene() {
       canvas.style.width = `${width}px`
       canvas.style.height = `${height}px`
       context.setTransform(density, 0, 0, density, 0, 0)
-      const count = width < 720 ? 3200 : 6500
+      const count = width < 720 ? 4200 : 8200
       background = Array.from({ length: count }, () => makeBackgroundParticle(width, height, true))
       if (logoImage.complete && logoImage.naturalWidth) logoParticles = makeLogoParticles(width, height)
     }

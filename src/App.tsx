@@ -14,16 +14,14 @@ const categorySource = (src: string, positions: string[]) => positions.map((posi
 const categories: Category[] = [
   { name: 'Beds', description: 'Designed for restful spaces.', images: categorySource('/images/funture2.png', ['center', '35% center', '65% center', 'center 68%']) },
   { name: 'Sofas', description: 'Comfort shaped with character.', images: categorySource('/images/funture4.png', ['center', '30% center', '70% center', 'center 65%']) },
-  { name: 'Dining Tables', description: 'Made for gathering.', images: categorySource('/images/editorial_architectural_photography_of_a_bespoke_handcrafted_solid_wood_dining.png', ['center', '25% center', '70% center', 'center 68%']) },
-  { name: 'Dining Chairs', description: 'Quiet form, everyday comfort.', images: categorySource('/images/screen.png', ['center', '30% center', '72% center', 'center 67%']) },
-  { name: 'Wardrobes', description: 'Storage with a refined presence.', images: categorySource('/images/funture3.png', ['center', '28% center', '70% center', 'center 68%']) },
-  { name: 'Coffee Tables', description: 'The centre of a considered room.', images: categorySource('/images/close_up_architectural_furniture_photography_of_a_modern_minimalist_solid_wood.png', ['center', '28% center', '72% center', 'center 70%']) },
-  { name: 'TV Stands', description: 'Clean lines for modern living.', images: categorySource('/images/screen.png', ['center 35%', '25% center', '75% center', 'center 72%']) },
-  { name: 'Office Furniture', description: 'Built for focused work.', images: categorySource('/images/master_woodworking_workshop_editorial_photography_showing_handcrafted_custom.png', ['center', '30% center', '70% center', 'center 66%']) },
+  { name: 'Dining', description: 'Made for gathering.', images: categorySource('/images/editorial_architectural_photography_of_a_bespoke_handcrafted_solid_wood_dining.png', ['center', '25% center', '70% center', 'center 68%']) },
+  { name: 'Wood Work', description: 'Crafted with precision.', images: categorySource('/images/master_woodworking_workshop_editorial_photography_showing_handcrafted_custom.png', ['center', '30% center', '70% center', 'center 66%']) },
+  { name: 'Tables', description: 'Form, function and detail.', images: categorySource('/images/close_up_architectural_furniture_photography_of_a_modern_minimalist_solid_wood.png', ['center', '28% center', '72% center', 'center 70%']) },
 ]
 
 function CategoryCard({ category, index }: { category: Category; index: number }) {
   const [imageIndex, setImageIndex] = useState(0)
+  const [reflection, setReflection] = useState({ x: 50, y: 50 })
 
   useEffect(() => {
     const timer = window.setInterval(() => setImageIndex((current) => (current + 1) % category.images.length), 4200 + index * 270)
@@ -31,9 +29,13 @@ function CategoryCard({ category, index }: { category: Category; index: number }
   }, [category.images.length, index])
 
   const move = (direction: number) => setImageIndex((current) => (current + direction + category.images.length) % category.images.length)
+  const moveReflection = (event: React.PointerEvent<HTMLElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect()
+    setReflection({ x: ((event.clientX - bounds.left) / bounds.width) * 100, y: ((event.clientY - bounds.top) / bounds.height) * 100 })
+  }
 
   return (
-    <article className="category-card">
+    <article className="category-card" onPointerMove={moveReflection} onPointerLeave={() => setReflection({ x: 50, y: 50 })} style={{ '--reflection-x': `${reflection.x}%`, '--reflection-y': `${reflection.y}%` } as React.CSSProperties}>
       <div className="category-image">
         {category.images.map((image, imagePosition) => (
           <img className={imagePosition === imageIndex ? 'is-active' : ''} src={image.src} alt={imagePosition === imageIndex ? category.name : ''} style={{ objectPosition: image.position }} key={`${image.src}-${image.position}`} />
@@ -46,6 +48,35 @@ function CategoryCard({ category, index }: { category: Category; index: number }
         <div className="category-copy"><h3>{category.name}</h3><p>{category.description}</p></div>
       </div>
     </article>
+  )
+}
+
+function PopularSection() {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const target = document.querySelector('.popular-section')
+    if (!target) return undefined
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true)
+        observer.disconnect()
+      }
+    }, { threshold: .18 })
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <section className={`popular-section ${visible ? 'is-visible' : ''}`} id="furniture" aria-labelledby="popular-title">
+      <div className="popular-heading">
+        <h2 id="popular-title"><span>MOST POPULAR</span><em>FURNITURE</em></h2>
+        <span>Explore the pieces that define the NIKA collection.</span>
+      </div>
+      <div className="category-grid">
+        {categories.map((category, index) => <CategoryCard category={category} index={index} key={category.name} />)}
+      </div>
+    </section>
   )
 }
 
@@ -103,16 +134,7 @@ export function App() {
             </div>
           </div>
         </section>
-        <section className="popular-section" id="furniture" aria-labelledby="popular-title">
-          <div className="popular-heading">
-            <p>ANIKA / SELECTED COLLECTIONS</p>
-            <h2 id="popular-title">MOST POPULAR<br /><em>FURNITURE</em></h2>
-            <span>Explore the pieces that define the ANIKA collection.</span>
-          </div>
-          <div className="category-grid">
-            {categories.map((category, index) => <CategoryCard category={category} index={index} key={category.name} />)}
-          </div>
-        </section>
+        <PopularSection />
       </main>
     </div>
   )
