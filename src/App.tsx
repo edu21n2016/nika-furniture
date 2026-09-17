@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { PopularParticleHeading } from './components/PopularParticleHeading'
 
 const slides = [
   { image: '/images/editorial_architectural_photography_of_a_bespoke_handcrafted_solid_wood_dining.png', alt: 'Handcrafted wood dining table in a modern interior', title: ['CRAFTED FOR', 'MODERN LIVING'], description: 'Furniture shaped by thoughtful design and skilled craftsmanship.' },
@@ -52,25 +53,10 @@ function CategoryCard({ category, index }: { category: Category; index: number }
 }
 
 function PopularSection() {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const target = document.querySelector('.popular-section')
-    if (!target) return undefined
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setVisible(true)
-        observer.disconnect()
-      }
-    }, { threshold: .18 })
-    observer.observe(target)
-    return () => observer.disconnect()
-  }, [])
-
   return (
-    <section className={`popular-section ${visible ? 'is-visible' : ''}`} id="furniture" aria-labelledby="popular-title">
+    <section className="popular-section" id="furniture" aria-label="Most Popular Furniture">
       <div className="popular-heading">
-        <h2 id="popular-title"><span>MOST POPULAR</span><em>FURNITURE</em></h2>
+        <PopularParticleHeading />
       </div>
       <div className="category-grid">
         {categories.map((category, index) => <CategoryCard category={category} index={index} key={category.name} />)}
