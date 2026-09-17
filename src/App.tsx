@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const slides = [
   { image: '/images/editorial_architectural_photography_of_a_bespoke_handcrafted_solid_wood_dining.png', alt: 'Handcrafted wood dining table in a modern interior', title: ['CRAFTED FOR', 'MODERN LIVING'], description: 'Furniture shaped by thoughtful design and skilled craftsmanship.' },
@@ -71,7 +71,6 @@ function PopularSection() {
     <section className={`popular-section ${visible ? 'is-visible' : ''}`} id="furniture" aria-labelledby="popular-title">
       <div className="popular-heading">
         <h2 id="popular-title"><span>MOST POPULAR</span><em>FURNITURE</em></h2>
-        <span>Explore the pieces that define the NIKA collection.</span>
       </div>
       <div className="category-grid">
         {categories.map((category, index) => <CategoryCard category={category} index={index} key={category.name} />)}
@@ -83,10 +82,30 @@ function PopularSection() {
 export function App() {
   const [slide, setSlide] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isOnLightArea, setIsOnLightArea] = useState(false)
+  const cursorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const timer = window.setInterval(() => setSlide((current) => (current + 1) % slides.length), 6500)
     return () => window.clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    const updateHeader = () => setIsOnLightArea(window.scrollY > window.innerHeight * .78)
+    updateHeader()
+    window.addEventListener('scroll', updateHeader, { passive: true })
+    return () => window.removeEventListener('scroll', updateHeader)
+  }, [])
+
+  useEffect(() => {
+    if (!window.matchMedia('(pointer: fine)').matches) return undefined
+    const follow = (event: PointerEvent) => {
+      cursorRef.current?.style.setProperty('--cursor-x', `${event.clientX}px`)
+      cursorRef.current?.style.setProperty('--cursor-y', `${event.clientY}px`)
+      cursorRef.current?.classList.toggle('is-over-action', Boolean((event.target as HTMLElement).closest('a, button')))
+    }
+    window.addEventListener('pointermove', follow)
+    return () => window.removeEventListener('pointermove', follow)
   }, [])
 
   const move = (direction: number) => setSlide((current) => (current + direction + slides.length) % slides.length)
@@ -94,7 +113,8 @@ export function App() {
 
   return (
     <div className="site-shell">
-      <header className="site-header">
+      <div ref={cursorRef} className="brand-cursor" aria-hidden="true" />
+      <header className={`site-header ${isOnLightArea ? 'is-on-light' : ''}`}>
         <nav className="navbar" aria-label="Primary navigation">
           <a className="nav-logo" href="#home" aria-label="NIKA Furnitures and Wood Work">
             <img src="/images/logow-removebg-preview.png" alt="NIKA" />
