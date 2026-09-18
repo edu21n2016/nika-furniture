@@ -1,147 +1,62 @@
 import { useEffect, useRef, useState } from 'react'
-import { PopularParticleHeading } from './components/PopularParticleHeading'
+import { motion } from 'framer-motion'
+import { ArrowLeft, ArrowRight, ArrowUpRight, Menu, Play, Send } from 'lucide-react'
 
-const slides = [
-  { image: '/images/editorial_architectural_photography_of_a_bespoke_handcrafted_solid_wood_dining.png', alt: 'Handcrafted wood dining table in a modern interior', title: ['CRAFTED FOR', 'MODERN LIVING'], description: 'Furniture shaped by thoughtful design and skilled craftsmanship.' },
-  { image: '/images/funture4.png', alt: 'Contemporary furniture in a warm living space', title: ['TIMELESS', 'WOOD CRAFTSMANSHIP'], description: 'Made with attention to material, detail, and lasting quality.' },
-  { image: '/images/funture2.png', alt: 'Crafted wooden bedroom furniture', title: ['DESIGNED FOR', 'YOUR SPACE'], description: 'Modern furniture created to bring warmth and character into every space.' },
-  { image: '/images/screen.png', alt: 'NIKA furniture showroom interior', title: ['BUILT WITH', 'PURPOSE'], description: 'Thoughtful furniture and wood work made for contemporary living.' },
+type Item = { title: string; text: string; image: string }
+const furniture: Item[] = [
+  { title: 'Sofas', text: 'Comfort shaped with character.', image: '/images/funture4.png' },
+  { title: 'Beds', text: 'Designed for restful spaces.', image: '/images/funture2.png' },
+  { title: 'Dining', text: 'Made for gathering.', image: '/images/editorial_architectural_photography_of_a_bespoke_handcrafted_solid_wood_dining.png' },
+  { title: 'Wood Work', text: 'Crafted with precision.', image: '/images/master_woodworking_workshop_editorial_photography_showing_handcrafted_custom.png' },
+  { title: 'Tables', text: 'Form, function and detail.', image: '/images/close_up_architectural_furniture_photography_of_a_modern_minimalist_solid_wood.png' },
 ]
-
-type Category = { name: string; description: string; images: Array<{ src: string; position: string }> }
-
-const categorySource = (src: string, positions: string[]) => positions.map((position) => ({ src, position }))
-
-const categories: Category[] = [
-  { name: 'Beds', description: 'Designed for restful spaces.', images: categorySource('/images/funture2.png', ['center', '35% center', '65% center', 'center 68%']) },
-  { name: 'Sofas', description: 'Comfort shaped with character.', images: categorySource('/images/funture4.png', ['center', '30% center', '70% center', 'center 65%']) },
-  { name: 'Dining', description: 'Made for gathering.', images: categorySource('/images/editorial_architectural_photography_of_a_bespoke_handcrafted_solid_wood_dining.png', ['center', '25% center', '70% center', 'center 68%']) },
-  { name: 'Wood Work', description: 'Crafted with precision.', images: categorySource('/images/master_woodworking_workshop_editorial_photography_showing_handcrafted_custom.png', ['center', '30% center', '70% center', 'center 66%']) },
-  { name: 'Tables', description: 'Form, function and detail.', images: categorySource('/images/close_up_architectural_furniture_photography_of_a_modern_minimalist_solid_wood.png', ['center', '28% center', '72% center', 'center 70%']) },
+const newArrivals: Item[] = [
+  { title: 'Sculptural Oak Chair', text: 'Made to order', image: furniture[4].image },
+  { title: 'Solid Walnut Sideboard', text: 'New arrival', image: furniture[3].image },
+  { title: 'Linen Lounge Sofa', text: 'Limited collection', image: furniture[0].image },
+  { title: 'Quiet Frame Bed', text: 'Made to order', image: furniture[1].image },
 ]
-
-function CategoryCard({ category, index }: { category: Category; index: number }) {
-  const [imageIndex, setImageIndex] = useState(0)
-  const [reflection, setReflection] = useState({ x: 50, y: 50 })
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setImageIndex((current) => (current + 1) % category.images.length), 4200 + index * 270)
-    return () => window.clearInterval(timer)
-  }, [category.images.length, index])
-
-  const move = (direction: number) => setImageIndex((current) => (current + direction + category.images.length) % category.images.length)
-  const moveReflection = (event: React.PointerEvent<HTMLElement>) => {
-    const bounds = event.currentTarget.getBoundingClientRect()
-    setReflection({ x: ((event.clientX - bounds.left) / bounds.width) * 100, y: ((event.clientY - bounds.top) / bounds.height) * 100 })
-  }
-
-  return (
-    <article className="category-card" onPointerMove={moveReflection} onPointerLeave={() => setReflection({ x: 50, y: 50 })} style={{ '--reflection-x': `${reflection.x}%`, '--reflection-y': `${reflection.y}%` } as React.CSSProperties}>
-      <div className="category-image">
-        {category.images.map((image, imagePosition) => (
-          <img className={imagePosition === imageIndex ? 'is-active' : ''} src={image.src} alt={imagePosition === imageIndex ? category.name : ''} style={{ objectPosition: image.position }} key={`${image.src}-${image.position}`} />
-        ))}
-        <div className="category-shade" />
-        <div className="category-controls">
-          <button type="button" onClick={() => move(-1)} aria-label={`Previous ${category.name} image`}>←</button>
-          <button type="button" onClick={() => move(1)} aria-label={`Next ${category.name} image`}>→</button>
-        </div>
-        <div className="category-copy"><h3>{category.name}</h3><p>{category.description}</p></div>
-      </div>
-    </article>
-  )
+const heroSlides = [
+  { image: furniture[2].image, eyebrow: 'ANIKA / FURNITURE & WOODWORK', title: ['CRAFTED FOR', 'MODERN LIVING'], copy: 'Furniture shaped by thoughtful design, quality materials, and skilled craftsmanship.' },
+  { image: furniture[0].image, eyebrow: 'THE LIVING COLLECTION', title: ['TIMELESS', 'WOOD CRAFTSMANSHIP'], copy: 'Warm materials, considered proportions, and enduring comfort.' },
+  { image: furniture[1].image, eyebrow: 'MADE FOR YOUR SPACE', title: ['BUILT WITH', 'PURPOSE'], copy: 'Thoughtful furniture and woodwork for contemporary living.' },
+]
+function Heading({ label, title, dark = false }: { label: string; title: string; dark?: boolean }) {
+  return <div className="mb-10 animate-[reveal_.6s_ease-out_both] md:mb-14"><p className={`mb-3 text-[10px] font-semibold tracking-[.3em] uppercase ${dark ? 'text-stone-400' : 'text-stone-500'}`}>{label}</p><h2 className={`font-serif text-4xl font-light tracking-tight md:text-5xl ${dark ? 'text-stone-100' : 'text-stone-900'}`}>{title}</h2></div>
 }
-
-function PopularSection() {
-  return (
-    <section className="popular-section" id="furniture" aria-label="Most Popular Furniture">
-      <div className="popular-heading">
-        <PopularParticleHeading />
-      </div>
-      <div className="category-grid">
-        {categories.map((category, index) => <CategoryCard category={category} index={index} key={category.name} />)}
-      </div>
-    </section>
-  )
+function ShowcaseCard({ item, className = '' }: { item: Item; className?: string }) {
+  return <article className={`group relative overflow-hidden rounded-2xl bg-stone-200 shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl ${className}`}><img src={item.image} alt={item.title} className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" /><div className="absolute inset-0 -translate-x-full bg-gradient-to-tr from-transparent via-white/25 to-transparent opacity-0 transition-all duration-1000 group-hover:translate-x-full group-hover:opacity-100" /><div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-stone-950/90 to-transparent" /><div className="absolute bottom-6 left-6 rounded-full border border-white/10 bg-stone-900/70 px-5 py-2.5 text-sm tracking-wider text-white uppercase backdrop-blur-md">{item.title}</div></article>
 }
-
-export function App() {
-  const [slide, setSlide] = useState(0)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [isOnLightArea, setIsOnLightArea] = useState(false)
-  const cursorRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setSlide((current) => (current + 1) % slides.length), 6500)
-    return () => window.clearInterval(timer)
-  }, [])
-
-  useEffect(() => {
-    const updateHeader = () => setIsOnLightArea(window.scrollY > window.innerHeight * .78)
-    updateHeader()
-    window.addEventListener('scroll', updateHeader, { passive: true })
-    return () => window.removeEventListener('scroll', updateHeader)
-  }, [])
-
+function BrandCursor() {
+  const cursor = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!window.matchMedia('(pointer: fine)').matches) return undefined
     const follow = (event: PointerEvent) => {
-      cursorRef.current?.style.setProperty('--cursor-x', `${event.clientX}px`)
-      cursorRef.current?.style.setProperty('--cursor-y', `${event.clientY}px`)
-      cursorRef.current?.classList.toggle('is-over-action', Boolean((event.target as HTMLElement).closest('a, button')))
+      cursor.current?.style.setProperty('--cursor-x', `${event.clientX}px`)
+      cursor.current?.style.setProperty('--cursor-y', `${event.clientY}px`)
+      cursor.current?.classList.toggle('is-active', Boolean((event.target as HTMLElement).closest('a,button')))
     }
     window.addEventListener('pointermove', follow)
     return () => window.removeEventListener('pointermove', follow)
   }, [])
-
-  const move = (direction: number) => setSlide((current) => (current + direction + slides.length) % slides.length)
-  const current = slides[slide]
-
-  return (
-    <div className="site-shell">
-      <div ref={cursorRef} className="brand-cursor" aria-hidden="true" />
-      <header className={`site-header ${isOnLightArea ? 'is-on-light' : ''}`}>
-        <nav className="navbar" aria-label="Primary navigation">
-          <a className="nav-logo" href="#home" aria-label="NIKA Furnitures and Wood Work">
-            <img src="/images/logow-removebg-preview.png" alt="NIKA" />
-          </a>
-          <button className="menu-toggle" type="button" aria-expanded={menuOpen} aria-label="Toggle navigation" onClick={() => setMenuOpen((open) => !open)}>
-            <span /><span />
-          </button>
-          <div className={`nav-links ${menuOpen ? 'is-open' : ''}`}>
-            {['Home', 'About', 'Furniture', 'Wood Work', 'Contact'].map((item) => <a href={`#${item.toLowerCase().replace(' ', '-')}`} key={item} onClick={() => setMenuOpen(false)}>{item}</a>)}
-            <a className="nav-cta" href="#furniture" onClick={() => setMenuOpen(false)}>Explore Our Work <span>↗</span></a>
-          </div>
-        </nav>
-      </header>
-
-      <main id="home">
-        <section className="hero" aria-labelledby="hero-title">
-          <div className="hero-copy" key={slide}>
-            <p className="hero-kicker">NIKA / FURNITURES &amp; WOOD WORK</p>
-            <h1 id="hero-title"><span className="title-line">{current.title[0]}</span><em className="title-line">{current.title[1]}</em></h1>
-            <p className="hero-description">{current.description}</p>
-            <div className="hero-actions">
-              <a className="button button-primary" href="#furniture">Explore Our Work <span>↗</span></a>
-              <a className="button button-text" href="#about">Discover NIKA <span>→</span></a>
-            </div>
-          </div>
-
-          <div className="hero-visual">
-            <div className="image-frame">
-              {slides.map((item, index) => <img className={index === slide ? 'is-active' : ''} src={item.image} alt={index === slide ? item.alt : ''} key={item.image} />)}
-              <div className="image-wash" />
-              <div className="image-controls">
-                <button type="button" onClick={() => move(-1)} aria-label="Previous image">←</button>
-                <span><b>{String(slide + 1).padStart(2, '0')}</b> / {String(slides.length).padStart(2, '0')}</span>
-                <button type="button" onClick={() => move(1)} aria-label="Next image">→</button>
-              </div>
-              <div className="slide-progress"><span style={{ width: `${((slide + 1) / slides.length) * 100}%` }} /></div>
-            </div>
-          </div>
-        </section>
-        <PopularSection />
-      </main>
-    </div>
-  )
+  return <div ref={cursor} className="brand-cursor" aria-hidden="true" />
 }
+function Header() { const [open, setOpen] = useState(false); return <header className="fixed inset-x-0 top-0 z-50 bg-gradient-to-b from-stone-950/70 via-stone-950/30 to-transparent text-stone-100 backdrop-blur-[2px]"><nav className="mx-auto flex h-18 max-w-7xl items-center justify-between px-6 md:px-8"><a href="#home"><img src="/images/logow-removebg-preview.png" alt="ANIKA" className="h-12 w-30 object-contain object-left drop-shadow-md" /></a><div className="hidden gap-7 md:flex">{['Home','About','Furniture','Wood Work','Contact'].map(x => <a key={x} href={`#${x.toLowerCase().replace(' ','-')}`} className="border-b border-transparent py-2 text-[10px] font-semibold tracking-widest uppercase transition hover:border-[#c34840] hover:text-[#ffd1c7]">{x}</a>)}</div><a href="#contact" className="hidden border border-white/50 bg-white/10 px-5 py-3 text-[10px] tracking-widest uppercase transition hover:border-[#b53029] hover:bg-[#b53029] md:block">Explore Our Work</a><button className="md:hidden" onClick={() => setOpen(!open)}><Menu /></button></nav>{open && <div className="border-t border-white/10 bg-stone-950/90 px-6 pb-5 backdrop-blur-md md:hidden">{['Home','About','Furniture','Wood Work','Contact'].map(x => <a key={x} href={`#${x.toLowerCase().replace(' ','-')}`} className="block py-3 text-xs tracking-widest uppercase">{x}</a>)}</div>}</header> }
+function Hero() {
+  const [slide, setSlide] = useState(0)
+  useEffect(() => { const timer = window.setInterval(() => setSlide((value) => (value + 1) % heroSlides.length), 6500); return () => window.clearInterval(timer) }, [])
+  const current = heroSlides[slide]
+  return <section id="home" className="relative flex min-h-svh items-end overflow-hidden bg-stone-950 px-6 pb-28 pt-28 text-white md:px-8 md:pb-32">
+    {heroSlides.map((item, index) => <img key={item.image} src={item.image} alt="ANIKA furniture interior" className={`absolute inset-0 h-full w-full object-cover transition-all duration-1000 ${index === slide ? 'scale-100 opacity-100' : 'scale-105 opacity-0'}`} />)}
+    <div className="absolute inset-0 bg-gradient-to-r from-stone-950/85 via-stone-950/40 to-transparent" />
+    <motion.div key={current.title[0]} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .65 }} className="relative mx-auto w-full max-w-7xl"><p className="mb-5 text-[10px] tracking-[.25em] text-stone-300 uppercase">{current.eyebrow}</p><h1 className="font-serif text-6xl leading-[.84] font-light tracking-tighter md:text-8xl">{current.title[0]}<br /><em className="text-[#d77a66]">{current.title[1]}</em></h1><p className="mt-7 max-w-md text-sm leading-7 text-stone-200">{current.copy}</p><div className="mt-9 flex flex-wrap gap-4"><a href="#furniture" className="border border-white/60 bg-white/10 px-6 py-3 text-[10px] tracking-widest uppercase transition hover:border-[#b53029] hover:bg-[#b53029]">Explore Our Work</a><a href="#about" className="border border-white/35 px-6 py-3 text-[10px] tracking-widest uppercase transition hover:bg-white hover:text-stone-900">Discover ANIKA</a></div></motion.div>
+    <div className="absolute right-6 bottom-8 z-10 flex items-center gap-3 md:right-8"><button onClick={() => setSlide((slide + heroSlides.length - 1) % heroSlides.length)} aria-label="Previous image" className="grid h-11 w-11 place-items-center rounded-full border border-white/35 transition hover:bg-[#b53029]"><ArrowLeft size={18}/></button><span className="w-12 text-center text-[10px] tracking-[.18em]">0{slide + 1} / 0{heroSlides.length}</span><button onClick={() => setSlide((slide + 1) % heroSlides.length)} aria-label="Next image" className="grid h-11 w-11 place-items-center rounded-full border border-white/35 transition hover:bg-[#b53029]"><ArrowRight size={18}/></button></div>
+  </section>
+}
+function Popular() { return <section id="furniture" className="bg-[#fdfcf9]/78 px-6 pt-16 pb-24 md:px-8 md:pb-32"><div className="mx-auto max-w-7xl"><Heading label="01 / Signature pieces" title="MOST POPULAR FURNITURE" /><div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8"><ShowcaseCard item={furniture[0]} className="h-[480px] md:col-span-7 md:h-[580px]" /><ShowcaseCard item={furniture[1]} className="h-[480px] md:col-span-5 md:h-[580px]" />{furniture.slice(2).map(item => <ShowcaseCard key={item.title} item={item} className="h-[380px] md:col-span-4" />)}</div></div></section> }
+function Arrivals() { return <section className="bg-white/78 px-6 py-24 md:px-8 md:py-32"><div className="mx-auto max-w-7xl"><Heading label="Spring / Summer Collection" title="NEW ARRIVALS" /><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{newArrivals.map(item => <article key={item.title} className="group rounded-2xl border border-stone-200 bg-white/95 p-3"><div className="relative aspect-[4/5] overflow-hidden rounded-xl"><img src={item.image} alt={item.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" /><button className="absolute inset-x-5 bottom-5 rounded-full bg-white py-3 text-[10px] tracking-widest uppercase opacity-0 transition group-hover:opacity-100">Quick View</button></div><div className="flex justify-between p-2 pt-4"><div><h3 className="font-serif text-lg">{item.title}</h3><p className="mt-1 text-[10px] tracking-wider text-stone-500 uppercase">{item.text}</p></div><span className="text-[10px] text-stone-500 uppercase">Inquire</span></div></article>)}</div></div></section> }
+function Milestones() { const stats = [['12+ Years','Master Woodcrafting'],['1,800+','Tailored Bespoke Spaces'],['100%','Sustainably Sourced Hardwood'],['15+','Design Industry Awards']]; return <section className="bg-stone-900 px-6 py-20 text-stone-100 md:px-8"><div className="mx-auto grid max-w-7xl grid-cols-2 gap-10 md:grid-cols-4">{stats.map(([a,b]) => <div key={a}><p className="font-serif text-4xl font-light md:text-5xl">{a}</p><p className="mt-3 text-[10px] leading-5 tracking-widest text-stone-400 uppercase">{b}</p></div>)}</div></section> }
+function MotionFeed() { return <section className="bg-[#fdfcf9]/78 px-6 py-24 md:px-8 md:py-32"><div className="mx-auto max-w-7xl"><Heading label="@ANIKAFurniture on TikTok" title="BEHIND THE CRAFT" /><div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">{furniture.slice(0,4).map((item,i) => <article key={item.title} className="group relative aspect-[9/16] overflow-hidden rounded-2xl bg-stone-900"><img src={item.image} alt={item.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" /><div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" /><span className="absolute top-5 left-5 grid h-10 w-10 place-items-center rounded-full border border-white/40 text-white"><Play size={15} fill="currentColor" /></span><p className="absolute right-5 bottom-5 left-5 text-sm text-white">{['Hand-carving detail','Living room reveal','Oil finish process','Material selection'][i]}</p></article>)}</div></div></section> }
+function Contact() { return <section id="contact" className="bg-[#fdfcf9]/78 px-6 py-24 md:px-12"><div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-2"><div><Heading label="Visit / Contact" title="BEGIN A BESPOKE PROJECT" /><p className="text-sm leading-7 text-stone-600">Addis Ababa, Ethiopia<br />Monday – Saturday, 9:00 AM – 6:00 PM<br />By appointment only</p></div><form className="rounded-2xl border border-stone-200 bg-white/90 p-7 shadow-sm"><div className="grid gap-5 sm:grid-cols-2">{['Name','Email'].map(x => <label key={x} className="text-xs text-stone-500">{x}<input className="mt-2 w-full border-b border-stone-300 py-3 outline-none focus:border-[#b53029]" /></label>)}</div><label className="mt-6 block text-xs text-stone-500">Furniture Category<select className="mt-2 w-full border-b border-stone-300 py-3 outline-none"><option>Choose a category</option></select></label><label className="mt-6 block text-xs text-stone-500">Project Details<textarea rows={4} className="mt-2 w-full border-b border-stone-300 py-3 outline-none" /></label><button className="mt-8 inline-flex items-center gap-2 rounded-full bg-stone-900 px-6 py-3 text-[10px] tracking-widest text-white uppercase"><Send size={14}/>Send Inquiry</button></form></div></section> }
+function Footer() { return <footer className="bg-stone-950 px-6 py-16 text-stone-400 md:px-8"><div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-4">{[['Brand Story','ANIKA Furniture & Woodwork'],['Quick Links','About','Furniture','Contact'],['Categories','Sofas','Beds','Dining','Tables']].map(group => <div key={group[0]}><h3 className="text-[10px] tracking-widest text-white uppercase">{group[0]}</h3>{group.slice(1).map(x => <p className="mt-4 text-sm" key={x}>{x}</p>)}</div>)}<div><h3 className="text-[10px] tracking-widest text-white uppercase">Newsletter</h3><div className="mt-5 flex border-b border-stone-700"><input placeholder="Your email" className="w-full bg-transparent py-3 outline-none"/><ArrowUpRight className="mt-3" size={18}/></div></div></div></footer> }
+export function App() { return <div className="site-shell bg-[#fdfcf9]/70 text-stone-900"><BrandCursor/><Header/><main><Hero/><Popular/><Arrivals/><Milestones/><MotionFeed/><Contact/></main><Footer/></div> }
