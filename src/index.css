@@ -11,6 +11,102 @@ button, input, select, textarea { font: inherit; }
 /* Existing full-page dust canvas remains behind the new Tailwind homepage. */
 .particle-scene { position: fixed; z-index: 0; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
 #root { position: relative; z-index: 1; }
+
+/* Navigation: a readable dark text bar, with an underline on the active section. */
+.site-header { background: transparent; }
+.site-header .nav-bar { background: transparent; }
+.nav-link {
+  position: relative;
+  color: #1c1917;
+  padding-bottom: 6px;
+}
+.nav-link:hover, .nav-link:focus-visible { color: #b53029; animation: nav-shake .45s ease-in-out; }
+.nav-link.is-current { color: #b53029; }
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  height: 2px;
+  width: 0;
+  background: #b53029;
+  transform: translateX(-50%);
+  transition: width .3s ease;
+}
+.nav-link:hover::after, .nav-link:focus-visible::after, .nav-link.is-current::after { width: 70%; }
+@keyframes nav-shake {
+  0% { transform: scale(1) translateX(0); }
+  25% { transform: scale(1.14) translateX(-2px); }
+  50% { transform: scale(1.14) translateX(2px); }
+  75% { transform: scale(1.14) translateX(-1px); }
+  100% { transform: scale(1) translateX(0); }
+}
+.nav-cta:hover, .nav-cta:focus-visible { border-color: #b53029; background-color: #b53029; color: #fff; }
+
+/* The hero is a crisp image panel, very slightly inset so a thin band of the
+   dust canvas shows down each side and behind the header. */
+#home { background: transparent; }
+.hero-glass {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #1c1917;
+  box-shadow: 0 40px 90px -50px rgba(0, 0, 0, .6);
+}
+.hero-glass > img { mix-blend-mode: normal; }
+
+/* Hero text: white by default, and red on hover using the SAME tone as the
+   second (accent) headline line, so the two lines stay consistent. */
+.hero-word { display: inline-block; color: #fff; transition: color .3s ease; }
+.hero-word:hover { color: #d77a66; }
+.hero-word--accent { color: #d77a66; font-style: normal; }
+.hero-word--accent:hover { color: #fff; }
+.hero-cta { border: 1px solid rgba(255,255,255,.6); background: rgba(255,255,255,.1); transition: border-color .3s ease, background-color .3s ease, color .3s ease; }
+.hero-cta:hover { border-color: #b53029; background-color: #b53029; color: #fff; }
+.hero-ghost { border: 1px solid rgba(255,255,255,.35); transition: background-color .3s ease, color .3s ease; }
+.hero-ghost:hover { background-color: #fff; color: #1c1917; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-link:hover, .nav-link:focus-visible { animation: none; }
+}
+
+/* Signature tiles: clean image cards with a soft light that follows the cursor. */
+.signature-tile { display: block; background: transparent; }
+.signature-tile .tile-frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgba(28, 25, 23, .18);
+}
+.signature-tile .tile-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .6s ease;
+}
+.signature-tile:hover .tile-frame img { transform: scale(1.05); }
+
+/* A soft light sheen that trails the cursor and brightens on hover. */
+.cursor-light {
+  position: absolute;
+  z-index: 15;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.6);
+  transition: opacity .3s ease, transform .3s ease;
+  background: radial-gradient(circle, rgba(255, 240, 220, .55) 0%, rgba(255, 214, 170, .25) 38%, rgba(255, 200, 150, 0) 70%);
+  mix-blend-mode: soft-light;
+}
+.signature-tile:hover .cursor-light { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .signature-tile .tile-frame img { transition: none; }
+  .cursor-light { transition: opacity .2s ease; }
+}
 .site-shell { min-height: 100vh; opacity: 0; animation: page-arrive .55s ease 6.4s forwards; }
 @keyframes page-arrive { to { opacity: 1; } }
 @keyframes reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }

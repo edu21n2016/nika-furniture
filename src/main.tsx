@@ -3,6 +3,9 @@ import './index.css'
 import { ParticleScene } from './ParticleScene'
 import { App } from './App'
 
-createRoot(document.getElementById('root')!).render(
-  <><ParticleScene /><App /></>,
+const rootElement = document.getElementById('root')
+if (!rootElement) throw new Error('Root element #root not found in index.html')
+
+createRoot(rootElement).render(
+ <><ParticleScene /><App /></>,
 )

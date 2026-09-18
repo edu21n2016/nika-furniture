@@ -84,114 +84,155 @@ function makeLogoParticles(width: number, height: number): LogoDust[] {
   return particles
 }
 
+type SceneSize = { width: number; height: number; density: number }
+
+type Scene = {
+  context: CanvasRenderingContext2D
+  size: SceneSize
+  background: BackgroundDust[]
+  logoParticles: LogoDust[]
+  logoImage: HTMLImageElement
+  reducedMotion: boolean
+  startedAt: number
+}
+
+function resizeScene(scene: Scene, canvas: HTMLCanvasElement) {
+  const width = window.innerWidth
+  const height = window.innerHeight
+  const density = Math.min(window.devicePixelRatio || 1, 1.5)
+  canvas.width = Math.round(width * density)
+  canvas.height = Math.round(height * density)
+  canvas.style.width = `${width}px`
+  canvas.style.height = `${height}px`
+  scene.context.setTransform(density, 0, 0, density, 0, 0)
+  scene.size = { width, height, density }
+  const count = width < 720 ? 4200 : 8200
+  scene.background = Array.from({ length: count }, () => makeBackgroundParticle(width, height, true))
+  if (scene.logoImage.complete && scene.logoImage.naturalWidth) scene.logoParticles = makeLogoParticles(width, height)
+}
+
+function drawBackground(scene: Scene, time: number) {
+  const { context } = scene
+  const { width, height } = scene.size
+  for (const particle of scene.background) {
+    particle.x -= particle.speed
+    particle.y += Math.sin(time * .00042 + particle.phase) * .16
+    // Immediate re-entry at the right maintains one unbroken right-to-left airflow.
+    if (particle.x < -24) Object.assign(particle, makeBackgroundParticle(width, height))
+    // Full presence at the right; a measured fade begins near centre and continues left.
+    const leftProgress = clamp(particle.x / (width * .35), 0, 1)
+    const fade = particle.x < width * .35 ? .18 + leftProgress * .82 : 1
+    context.globalAlpha = particle.alpha * fade
+    context.fillStyle = `rgb(${particle.color})`
+    context.save()
+    context.translate(particle.x, particle.y + Math.sin(time * .0007 + particle.phase) * particle.wave)
+    context.rotate(Math.sin(time * .00055 + particle.phase) * .35)
+    context.fillRect(-particle.length / 2, -particle.size / 2, particle.length, particle.size)
+    context.restore()
+  }
+}
+
+function drawLogo(scene: Scene, elapsed: number) {
+  const { context, logoImage, reducedMotion } = scene
+  const { width, height } = scene.size
+  const gatherDuration = reducedMotion ? 1 : 2500
+  const holdDuration = reducedMotion ? 350 : 2200
+  const breakDuration = reducedMotion ? 1 : 1050
+  const total = gatherDuration + holdDuration + breakDuration
+  if (elapsed > total) return
+  const gather = clamp(elapsed / gatherDuration, 0, 1)
+  const holdEnd = gatherDuration + holdDuration
+  const breaking = elapsed > holdEnd ? clamp((elapsed - holdEnd) / breakDuration, 0, 1) : 0
+  for (const particle of scene.logoParticles) {
+    let x: number
+    let y: number
+    let alpha: number
+    if (breaking > 0) {
+      x = particle.targetX + (particle.outX - particle.targetX) * easeOut(breaking)
+      y = particle.targetY + (particle.outY - particle.targetY) * easeOut(breaking)
+      alpha = particle.alpha * (1 - breaking)
+    } else {
+      const progress = easeOut(gather)
+      x = particle.startX + (particle.targetX - particle.startX) * progress
+      y = particle.startY + (particle.targetY - particle.startY) * progress
+      alpha = particle.alpha * Math.min(1, gather * 1.7)
+    }
+    context.globalAlpha = alpha
+    context.fillStyle = 'rgb(166, 42, 36)'
+    context.fillRect(x, y, particle.size, particle.size)
+  }
+
+  // The actual asset is always crisp; dust only frames it during the entrance.
+  const logoWidth = Math.min(width * .48, 300)
+  const logoHeight = logoWidth * .76
+  const logoX = width / 2 - logoWidth / 2
+  const logoY = height / 2 - logoHeight / 2 - height * .075
+  const logoOpacity = breaking > 0 ? 1 - breaking : Math.min(1, easeOut(gather) * 1.3)
+  context.globalAlpha = logoOpacity
+  context.drawImage(logoImage, 0, 0, logoImage.naturalWidth, logoImage.naturalHeight * .70, logoX, logoY, logoWidth, logoHeight)
+}
+
 export function ParticleScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    const canvas = canvasRef.current!
-    const context = canvas.getContext('2d')!
-    let frame = 0
-    let startedAt = performance.now()
-    let width = 0
-    let height = 0
-    let density = 1
-    let background: BackgroundDust[] = []
-    let logoParticles: LogoDust[] = []
+    const canvas = canvasRef.current
+    if (!canvas) return undefined
+    const context = canvas.getContext('2d')
+    if (!context) return undefined
     const logoImage = new Image()
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-    const resize = () => {
-      width = window.innerWidth
-      height = window.innerHeight
-      density = Math.min(window.devicePixelRatio || 1, 1.5)
-      canvas.width = Math.round(width * density)
-      canvas.height = Math.round(height * density)
-      canvas.style.width = `${width}px`
-      canvas.style.height = `${height}px`
-      context.setTransform(density, 0, 0, density, 0, 0)
-      const count = width < 720 ? 4200 : 8200
-      background = Array.from({ length: count }, () => makeBackgroundParticle(width, height, true))
-      if (logoImage.complete && logoImage.naturalWidth) logoParticles = makeLogoParticles(width, height)
+    const scene: Scene = {
+      context,
+      size: { width: 0, height: 0, density: 1 },
+      background: [],
+      logoParticles: [],
+      logoImage,
+      reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      startedAt: performance.now(),
     }
-
-    const drawBackground = (time: number) => {
-      for (const particle of background) {
-        particle.x -= particle.speed
-        particle.y += Math.sin(time * .00042 + particle.phase) * .16
-        // Immediate re-entry at the right maintains one unbroken right-to-left airflow.
-        if (particle.x < -24) Object.assign(particle, makeBackgroundParticle(width, height))
-        // Full presence at the right; a measured fade begins near centre and continues left.
-        const leftProgress = clamp(particle.x / (width * .35), 0, 1)
-        const fade = particle.x < width * .35 ? .18 + leftProgress * .82 : 1
-        context.globalAlpha = particle.alpha * fade
-        context.fillStyle = `rgb(${particle.color})`
-        context.save()
-        context.translate(particle.x, particle.y + Math.sin(time * .0007 + particle.phase) * particle.wave)
-        context.rotate(Math.sin(time * .00055 + particle.phase) * .35)
-        context.fillRect(-particle.length / 2, -particle.size / 2, particle.length, particle.size)
-        context.restore()
+    let frame = 0
+    const handleResize = () => {
+      resizeScene(scene, canvas)
+      if (logoImage.complete && logoImage.naturalWidth) {
+        scene.logoParticles = makeLogoParticles(scene.size.width, scene.size.height)
       }
-    }
-
-    const drawLogo = (elapsed: number) => {
-      const gatherDuration = reducedMotion ? 1 : 2500
-      const holdDuration = reducedMotion ? 350 : 2200
-      const breakDuration = reducedMotion ? 1 : 1050
-      const total = gatherDuration + holdDuration + breakDuration
-      if (elapsed > total) return
-      const gather = clamp(elapsed / gatherDuration, 0, 1)
-      const holdEnd = gatherDuration + holdDuration
-      const breaking = elapsed > holdEnd ? clamp((elapsed - holdEnd) / breakDuration, 0, 1) : 0
-      for (const particle of logoParticles) {
-        let x: number
-        let y: number
-        let alpha: number
-        if (breaking > 0) {
-          x = particle.targetX + (particle.outX - particle.targetX) * easeOut(breaking)
-          y = particle.targetY + (particle.outY - particle.targetY) * easeOut(breaking)
-          alpha = particle.alpha * (1 - breaking)
-        } else {
-          const progress = easeOut(gather)
-          x = particle.startX + (particle.targetX - particle.startX) * progress
-          y = particle.startY + (particle.targetY - particle.startY) * progress
-          alpha = particle.alpha * Math.min(1, gather * 1.7)
-        }
-        context.globalAlpha = alpha
-        context.fillStyle = 'rgb(166, 42, 36)'
-        context.fillRect(x, y, particle.size, particle.size)
-      }
-
-      // The actual asset is always crisp; dust only frames it during the entrance.
-      const logoWidth = Math.min(width * .48, 300)
-      const logoHeight = logoWidth * .76
-      const logoX = width / 2 - logoWidth / 2
-      const logoY = height / 2 - logoHeight / 2 - height * .075
-      const logoOpacity = breaking > 0 ? 1 - breaking : Math.min(1, easeOut(gather) * 1.3)
-      context.globalAlpha = logoOpacity
-      context.drawImage(logoImage, 0, 0, logoImage.naturalWidth, logoImage.naturalHeight * .70, logoX, logoY, logoWidth, logoHeight)
     }
 
     const render = (time: number) => {
-      context.clearRect(0, 0, width, height)
+      frame = requestAnimationFrame(render)
+      if (document.hidden) return
+      const { context: draw, size, reducedMotion, startedAt } = scene
+      draw.clearRect(0, 0, size.width, size.height)
       const elapsed = time - startedAt
       const backgroundStart = reducedMotion ? 700 : 6400
-      if (elapsed < backgroundStart) drawLogo(elapsed)
-      else drawBackground(time)
-      context.globalAlpha = 1
-      frame = requestAnimationFrame(render)
+      if (elapsed < backgroundStart) drawLogo(scene, elapsed)
+      else drawBackground(scene, time)
+      draw.globalAlpha = 1
+    }
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(frame)
+        frame = 0
+      } else if (!frame) {
+        scene.startedAt = performance.now()
+        frame = requestAnimationFrame(render)
+      }
     }
 
     logoImage.onload = () => {
-      logoParticles = makeLogoParticles(width, height)
-      startedAt = performance.now()
+      scene.logoParticles = makeLogoParticles(scene.size.width, scene.size.height)
+      scene.startedAt = performance.now()
     }
     logoImage.src = '/images/nika-logo.png'
-    resize()
-    window.addEventListener('resize', resize)
-    frame = requestAnimationFrame(render)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    document.addEventListener('visibilitychange', handleVisibility)
+    if (!document.hidden) frame = requestAnimationFrame(render)
     return () => {
       cancelAnimationFrame(frame)
-      window.removeEventListener('resize', resize)
+      window.removeEventListener('resize', handleResize)
+      document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [])
 
