@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, ArrowUpRight, Menu, Play, Send, X } from 'lucide-react'
+import { ParticleHeadline } from './ParticleHeadline'
 import {
   achievements,
   contact,
@@ -158,9 +159,10 @@ function Hero() {
   const [slide, setSlide] = useState(0)
   useEffect(() => { const timer = window.setInterval(() => setSlide((value) => (value + 1) % heroSlides.length), 6500); return () => window.clearInterval(timer) }, [])
   const current = heroSlides[slide]
-  return <section id="home" className="relative flex min-h-svh flex-col justify-center px-3 pt-24 pb-8 text-white md:px-6 md:pt-28 md:pb-12">
-    {/* Almost full-width image panel: only a thin dust band shows down each side. */}
-    <div className="hero-glass mx-auto flex min-h-[80svh] w-full max-w-[1600px] flex-col justify-center px-8 py-16 md:px-16 md:py-20">
+  return <section id="home" className="relative flex min-h-svh flex-col justify-center px-2 pt-20 pb-6 text-white md:px-4 md:pt-24 md:pb-8">
+    {/* Near-full-width image panel: the frame runs close to the viewport edges so
+        only a slim band of dust shows, rather than a wide empty margin each side. */}
+    <div className="hero-glass mx-auto flex min-h-[82svh] w-full max-w-[1900px] flex-col justify-center px-8 py-12 md:px-16 md:py-14">
       {heroSlides.map((item, index) => <img key={item.image} src={item.image} alt="ANIKA furniture interior" className={`absolute inset-0 h-full w-full object-cover transition-all duration-1000 ${index === slide ? 'scale-100' : 'scale-105 opacity-0'}`} />)}
       {/* Readability wash only — kept light so the photograph stays crisp. */}
       <div className="absolute inset-0 bg-gradient-to-r from-stone-950/70 via-stone-950/30 to-stone-950/5" />
@@ -173,21 +175,29 @@ function Signature() {
   const [active, setActive] = useState<Item | null>(null)
   const open = (item: Item) => setActive(item)
   return (
-    <section id="furniture" className="bg-[rgba(253,252,249,0.9)] px-6 pt-16 pb-24 md:px-8 md:pb-32">
-      <div className="mx-auto max-w-7xl">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <Heading label="01 / Signature pieces" title="SIGNATURE PIECES" />
-          <p className="mb-10 max-w-sm text-sm leading-7 text-stone-600 md:mb-14">
-            Furniture shaped by natural materials, thoughtful design, and skilled hands.
-          </p>
-        </div>
-        {/* Asymmetric editorial composition — one tall feature beside larger supporting pieces. */}
-        <div className="grid grid-cols-2 gap-5 md:grid-cols-12 md:gap-7">
-          <SignatureTile item={signaturePieces[0]} onOpen={() => open(signaturePieces[0])} className="col-span-2 md:col-span-7 md:row-span-2" ratio="aspect-[4/5]" />
-          <SignatureTile item={signaturePieces[3]} onOpen={() => open(signaturePieces[3])} className="md:col-span-5" ratio="aspect-[5/4]" />
-          <SignatureTile item={signaturePieces[4]} onOpen={() => open(signaturePieces[4])} className="md:col-span-5" ratio="aspect-[5/4]" />
-          <SignatureTile item={signaturePieces[2]} onOpen={() => open(signaturePieces[2])} className="md:col-span-6" ratio="aspect-[16/10]" />
-          <SignatureTile item={signaturePieces[1]} onOpen={() => open(signaturePieces[1])} className="md:col-span-6" ratio="aspect-[16/10]" />
+    <section id="furniture" className="relative bg-[rgba(253,252,249,0.42)] px-6 pt-14 pb-20 md:px-8 md:pt-16 md:pb-28">
+      <div className="mx-auto max-w-[1480px]">
+        {/* Full-width headline that assembles itself from wood chips flying in from
+            all four edges — and replays every time the section scrolls into view. */}
+        {/* Height scales with the viewport so the auto-fitted letters are never
+            clipped top or bottom, and the text sits inside a centered column. */}
+        <ParticleHeadline text="SIGNATURE PIECES" className="mx-auto mb-6 h-[64px] w-full max-w-5xl md:mb-8 md:h-[124px]" />
+        {/* Balanced composition: one tall feature paired with supporting pieces of the
+            same column width, with matching ratios so the gaps read evenly. */}
+        {/* Two columns: a tall feature on the left whose height is set by the stacked
+            pair beside it, so the two columns end flush with no leftover gap. */}
+        <div className="mx-auto max-w-[1700px]">
+          <div className="grid gap-5 md:grid-cols-2 md:gap-6">
+            <SignatureTile item={signaturePieces[0]} onOpen={() => open(signaturePieces[0])} ratio="aspect-[4/5] md:aspect-auto md:h-full" className="md:h-full" />
+            <div className="grid gap-5 md:gap-6">
+              <SignatureTile item={signaturePieces[3]} onOpen={() => open(signaturePieces[3])} ratio="aspect-[16/10]" />
+              <SignatureTile item={signaturePieces[4]} onOpen={() => open(signaturePieces[4])} ratio="aspect-[16/10]" />
+            </div>
+          </div>
+          <div className="mt-5 grid gap-5 md:mt-6 md:grid-cols-2 md:gap-6">
+            <SignatureTile item={signaturePieces[2]} onOpen={() => open(signaturePieces[2])} ratio="aspect-[16/10]" />
+            <SignatureTile item={signaturePieces[1]} onOpen={() => open(signaturePieces[1])} ratio="aspect-[16/10]" />
+          </div>
         </div>
       </div>
       <PieceLightbox item={active} onClose={() => setActive(null)} />
