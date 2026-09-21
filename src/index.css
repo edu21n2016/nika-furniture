@@ -12,27 +12,60 @@ button, input, select, textarea { font: inherit; }
 .particle-scene { position: fixed; z-index: 0; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
 #root { position: relative; z-index: 1; }
 
-/* Navigation: transparent at the top of the dark hero; once scrolled it becomes a
-   subtle frosted white bar so the dark links stay readable over any section, yet
-   still blends into plain white backgrounds (no hard edge, just a soft blur). */
+/* Navigation is a light frosted glass bar in every state — the same family as
+   the near-white page, so over a pale section there is no seam and no coloured
+   band, just a faint blur. Because the glass is light rather than a dark scrim,
+   the link text is dark throughout, which also keeps it readable over the hero:
+   the hero is a photograph, but the left side of it carries a dark wash, so a
+   small light panel behind dark text is the pairing that survives both. */
 .site-header {
-  background: transparent;
+  background-color: rgba(253, 252, 249, .82);
+  -webkit-backdrop-filter: blur(12px) saturate(1.5);
+  backdrop-filter: blur(12px) saturate(1.5);
   transition: background-color .35s ease, backdrop-filter .35s ease, box-shadow .35s ease;
 }
 .site-header.is-scrolled {
-  background-color: rgba(253, 252, 249, .72);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
-  backdrop-filter: blur(14px) saturate(1.4);
-  box-shadow: 0 1px 0 rgba(28, 25, 23, .08);
+  background-color: rgba(253, 252, 249, .82);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
+  box-shadow: 0 1px 0 rgba(28, 25, 23, .06);
 }
 .site-header .nav-bar { background: transparent; }
+
+/* Link colours. `!important` is needed because each link also carries its own
+   Tailwind colour utility, which would otherwise win on specificity. */
+.site-header .nav-link,
+.site-header.is-scrolled .nav-link { color: #1c1917 !important; }
+.site-header .nav-link:hover,
+.site-header .nav-link:focus-visible,
+.site-header .nav-link.is-current,
+.site-header.is-scrolled .nav-link:hover,
+.site-header.is-scrolled .nav-link:focus-visible,
+.site-header.is-scrolled .nav-link.is-current { color: #b53029 !important; }
+.site-header button, .site-header.is-scrolled button { color: #1c1917; }
+
+/* The mobile dropdown is a solid dark panel, so its links stay light there. */
+.site-header.is-scrolled .mobile-panel .nav-link,
+.site-header .mobile-panel .nav-link { color: #f5f5f4 !important; }
+
+/* CTA: solid red on the light glass, inverting to white fill / red text on
+   hover. Identical in both header states, since the glass no longer changes
+   between them. */
+.nav-cta {
+  border-color: #b53029 !important;
+  background-color: #b53029 !important;
+  color: #fff !important;
+}
+.nav-cta:hover, .nav-cta:focus-visible, .nav-cta:active {
+  border-color: #b53029 !important;
+  background-color: #fff !important;
+  color: #b53029 !important;
+}
 .nav-link {
   position: relative;
-  color: #1c1917;
   padding-bottom: 6px;
 }
-.nav-link:hover, .nav-link:focus-visible { color: #b53029; animation: nav-shake .45s ease-in-out; }
-.nav-link.is-current { color: #b53029; }
+.nav-link:hover, .nav-link:focus-visible { animation: nav-shake .45s ease-in-out; }
 .nav-link::after {
   content: '';
   position: absolute;
@@ -52,29 +85,21 @@ button, input, select, textarea { font: inherit; }
   75% { transform: scale(1.14) translateX(-1px); }
   100% { transform: scale(1) translateX(0); }
 }
-/* CTA: solid red with white text at rest; on touch/hover the colors invert so the
-   fill goes white and the text goes red. Transition smooths the swap. */
-.nav-cta {
-  border-color: #b53029 !important;
-  background-color: #b53029 !important;
-  color: #fff !important;
-  transition: background-color .3s ease, color .3s ease, border-color .3s ease !important;
-}
-.nav-cta:hover, .nav-cta:focus-visible, .nav-cta:active {
-  border-color: #b53029 !important;
-  background-color: #fff !important;
-  color: #b53029 !important;
+.nav-cta, .nav-cta:hover, .nav-cta:focus-visible, .nav-cta:active {
+  transition: background-color .3s ease, color .3s ease, border-color .3s ease;
 }
 
 /* The hero is a crisp image panel, very slightly inset so a thin band of the
-   dust canvas shows down each side and behind the header. */
+   dust canvas shows down each side and behind the header.
+   No bottom padding: the signature section begins as soon as the hero ends, so no
+   empty band of page background is left showing between the two. */
 #home { background: transparent; }
 .hero-glass {
   position: relative;
   overflow: hidden;
   border-radius: 4px;
   background: #1c1917;
-  box-shadow: 0 40px 90px -50px rgba(0, 0, 0, .6);
+  box-shadow: 0 40px 90px -50px rgba(0, 0, 0, .5);
 }
 .hero-glass > img { mix-blend-mode: normal; }
 

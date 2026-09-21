@@ -154,18 +154,24 @@ function Header() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-  return <header className={`site-header fixed inset-x-0 top-0 z-50 text-stone-100${scrolled ? ' is-scrolled' : ''}`}><nav className="nav-bar mx-auto flex h-20 max-w-7xl items-center justify-between px-6 md:px-8"><a href="#home" aria-label="ANIKA home"><img src="/images/logow-removebg-preview.png" alt="ANIKA" className="h-12 w-30 object-contain object-left drop-shadow-md" /></a><div className="hidden items-center gap-2 md:flex">{navItems.map(x => <a key={x} href={slug(x)} className={`nav-link rounded-full px-4 py-2 text-sm font-medium tracking-wide uppercase transition-colors duration-300 ${current === x.toLowerCase().replace(' ', '-') ? 'is-current' : ''}`}>{x}</a>)}</div><a href="#contact" className="nav-cta hidden border border-white/50 bg-white/10 px-6 py-3 text-xs tracking-widest uppercase transition-colors duration-300 md:block">Explore Our Work</a><button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Toggle navigation" aria-expanded={open}><Menu /></button></nav>{open && <div className="border-t border-white/10 bg-stone-950/90 px-6 pb-5 backdrop-blur-md md:hidden">{navItems.map(x => <a key={x} href={slug(x)} className="nav-link block px-2 py-3 text-base tracking-wide uppercase">{x}</a>)}</div>}</header> }
+  return <header className={`site-header fixed inset-x-0 top-0 z-50${scrolled ? ' is-scrolled' : ''}`}><nav className="nav-bar mx-auto flex h-20 max-w-7xl items-center justify-between px-6 md:px-8"><a href="#home" aria-label="ANIKA home"><img src="/images/logow-removebg-preview.png" alt="ANIKA" className="h-12 w-30 object-contain object-left drop-shadow-md" /></a><div className="relative hidden items-center gap-2 md:flex">{navItems.map(x => <a key={x} href={slug(x)} className={`nav-link rounded-full px-4 py-2 text-sm font-medium tracking-wide uppercase transition-colors duration-300 ${current === x.toLowerCase().replace(' ', '-') ? 'is-current' : ''}`}>{x}</a>)}</div><a href="#contact" className="nav-cta hidden border border-white/50 bg-white/10 px-6 py-3 text-xs tracking-widest uppercase transition-colors duration-300 md:block">Explore Our Work</a><button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Toggle navigation" aria-expanded={open}><Menu /></button></nav>{open && <div className="mobile-panel border-t border-white/10 bg-stone-950/90 px-6 pb-5 backdrop-blur-md md:hidden">{navItems.map(x => <a key={x} href={slug(x)} className="nav-link block px-2 py-3 text-base tracking-wide uppercase">{x}</a>)}</div>}</header> }
 function Hero() {
   const [slide, setSlide] = useState(0)
   useEffect(() => { const timer = window.setInterval(() => setSlide((value) => (value + 1) % heroSlides.length), 6500); return () => window.clearInterval(timer) }, [])
   const current = heroSlides[slide]
-  return <section id="home" className="relative flex min-h-svh flex-col justify-center px-2 pt-20 pb-6 text-white md:px-4 md:pt-24 md:pb-8">
+  // No bottom padding: the hero runs straight into the signature section so no
+  // empty strip of page background shows underneath it.
+  return <section id="home" className="relative flex min-h-svh flex-col justify-center px-2 pt-24 text-white md:px-4 md:pt-28">
     {/* Near-full-width image panel: the frame runs close to the viewport edges so
         only a slim band of dust shows, rather than a wide empty margin each side. */}
-    <div className="hero-glass mx-auto flex min-h-[82svh] w-full max-w-[1900px] flex-col justify-center px-8 py-12 md:px-16 md:py-14">
+    <div className="hero-glass mx-auto flex min-h-[86svh] w-full max-w-[1900px] flex-col justify-center px-8 py-12 md:px-16 md:py-14">
       {heroSlides.map((item, index) => <img key={item.image} src={item.image} alt="ANIKA furniture interior" className={`absolute inset-0 h-full w-full object-cover transition-all duration-1000 ${index === slide ? 'scale-100' : 'scale-105 opacity-0'}`} />)}
-      {/* Readability wash only — kept light so the photograph stays crisp. */}
-      <div className="absolute inset-0 bg-gradient-to-r from-stone-950/70 via-stone-950/30 to-stone-950/5" />
+      {/* Readability wash only — concentrated on the left, where the headline and
+          copy sit, and almost absent on the right so the photograph reads crisp. */}
+      <div className="absolute inset-0 bg-gradient-to-r from-stone-950/55 via-transparent to-transparent" />
+      {/* Narrow band at the very top: gives the header something to sit on where
+          the photo runs bright. Fades out well above the headline. */}
+      <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-stone-950/60 to-transparent" />
       <div className="absolute right-8 bottom-8 z-10 flex items-center gap-3 md:right-12 md:bottom-10"><button onClick={() => setSlide((slide + heroSlides.length - 1) % heroSlides.length)} aria-label="Previous image" className="hero-ghost grid h-11 w-11 place-items-center rounded-full border-white/40"><ArrowLeft size={18}/></button><span className="w-12 text-center text-[10px] tracking-[.18em] text-white">0{slide + 1} / 0{heroSlides.length}</span><button onClick={() => setSlide((slide + 1) % heroSlides.length)} aria-label="Next image" className="hero-ghost grid h-11 w-11 place-items-center rounded-full border-white/40"><ArrowRight size={18}/></button></div>
       <motion.div key={current.title[0]} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .65 }} className="relative w-full"><p className="mb-5 text-[10px] tracking-[.25em] text-stone-300 uppercase">{current.eyebrow}</p><h1 className="font-serif text-6xl leading-[.9] font-light tracking-tighter md:text-8xl"><span className="hero-word">{current.title[0]}</span><br /><em className="hero-word hero-word--accent">{current.title[1]}</em></h1><p className="mt-7 max-w-md text-sm leading-7 text-stone-200">{current.copy}</p><div className="mt-9 flex flex-wrap gap-4"><a href="#furniture" className="hero-cta border-white/60 bg-white/10 px-6 py-3 text-xs tracking-widest uppercase">Explore Our Work</a><a href="#about" className="hero-ghost border-white/35 px-6 py-3 text-xs tracking-widest uppercase">Discover ANIKA</a></div></motion.div>
     </div>
@@ -175,26 +181,32 @@ function Signature() {
   const [active, setActive] = useState<Item | null>(null)
   const open = (item: Item) => setActive(item)
   return (
-    <section id="furniture" className="relative bg-[rgba(253,252,249,0.42)] px-6 pt-14 pb-20 md:px-8 md:pt-16 md:pb-28">
-      <div className="mx-auto max-w-[1480px]">
+    <section id="furniture" className="relative bg-[rgba(253,252,249,0.42)] px-6 pt-12 pb-20 md:px-8 md:pt-14 md:pb-28">
+      {/* Wider than the text column on purpose: the gallery is the hero of this
+          section, so it stretches further towards the page edges — but the
+          section's own px-6 / md:px-8 padding is left intact, so the frames still
+          sit inside a real margin and never touch the viewport edge. */}
+      <div className="mx-auto max-w-7xl">
         {/* Full-width headline that assembles itself from wood chips flying in from
             all four edges — and replays every time the section scrolls into view. */}
         {/* Height scales with the viewport so the auto-fitted letters are never
             clipped top or bottom, and the text sits inside a centered column. */}
-        <ParticleHeadline text="SIGNATURE PIECES" className="mx-auto mb-6 h-[64px] w-full max-w-5xl md:mb-8 md:h-[124px]" />
-        {/* Balanced composition: one tall feature paired with supporting pieces of the
-            same column width, with matching ratios so the gaps read evenly. */}
-        {/* Two columns: a tall feature on the left whose height is set by the stacked
-            pair beside it, so the two columns end flush with no leftover gap. */}
-        <div className="mx-auto max-w-[1700px]">
-          <div className="grid gap-5 md:grid-cols-2 md:gap-6">
-            <SignatureTile item={signaturePieces[0]} onOpen={() => open(signaturePieces[0])} ratio="aspect-[4/5] md:aspect-auto md:h-full" className="md:h-full" />
-            <div className="grid gap-5 md:gap-6">
-              <SignatureTile item={signaturePieces[3]} onOpen={() => open(signaturePieces[3])} ratio="aspect-[16/10]" />
-              <SignatureTile item={signaturePieces[4]} onOpen={() => open(signaturePieces[4])} ratio="aspect-[16/10]" />
-            </div>
+        <ParticleHeadline text="SIGNATURE PIECES" className="mx-auto mb-10 h-[64px] w-full max-w-5xl md:mb-16 md:h-[112px]" />
+        {/* Five-piece gallery in two columns. Each column is a two-part stack:
+
+            left  — a wide tile above the tall feature
+            right — three wide tiles
+            Every tile in a column shares that column's width, so both outer
+            edges run perfectly straight even though the tiles differ in height. */}
+        <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2 md:gap-6">
+          {/* Left column: wide tile on top, tall feature below. */}
+          <div className="grid gap-5 md:gap-6">
+            <SignatureTile item={signaturePieces[4]} onOpen={() => open(signaturePieces[4])} ratio="aspect-[16/10]" />
+            <SignatureTile item={signaturePieces[0]} onOpen={() => open(signaturePieces[0])} ratio="aspect-[4/5]" />
           </div>
-          <div className="mt-5 grid gap-5 md:mt-6 md:grid-cols-2 md:gap-6">
+          {/* Right column: three wide tiles. */}
+          <div className="grid gap-5 md:gap-6">
+            <SignatureTile item={signaturePieces[3]} onOpen={() => open(signaturePieces[3])} ratio="aspect-[16/10]" />
             <SignatureTile item={signaturePieces[2]} onOpen={() => open(signaturePieces[2])} ratio="aspect-[16/10]" />
             <SignatureTile item={signaturePieces[1]} onOpen={() => open(signaturePieces[1])} ratio="aspect-[16/10]" />
           </div>
