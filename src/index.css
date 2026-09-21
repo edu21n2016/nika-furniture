@@ -12,8 +12,19 @@ button, input, select, textarea { font: inherit; }
 .particle-scene { position: fixed; z-index: 0; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
 #root { position: relative; z-index: 1; }
 
-/* Navigation: a readable dark text bar, with an underline on the active section. */
-.site-header { background: transparent; }
+/* Navigation: transparent at the top of the dark hero; once scrolled it becomes a
+   subtle frosted white bar so the dark links stay readable over any section, yet
+   still blends into plain white backgrounds (no hard edge, just a soft blur). */
+.site-header {
+  background: transparent;
+  transition: background-color .35s ease, backdrop-filter .35s ease, box-shadow .35s ease;
+}
+.site-header.is-scrolled {
+  background-color: rgba(253, 252, 249, .72);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: 0 1px 0 rgba(28, 25, 23, .08);
+}
 .site-header .nav-bar { background: transparent; }
 .nav-link {
   position: relative;
@@ -41,7 +52,19 @@ button, input, select, textarea { font: inherit; }
   75% { transform: scale(1.14) translateX(-1px); }
   100% { transform: scale(1) translateX(0); }
 }
-.nav-cta:hover, .nav-cta:focus-visible { border-color: #b53029; background-color: #b53029; color: #fff; }
+/* CTA: solid red with white text at rest; on touch/hover the colors invert so the
+   fill goes white and the text goes red. Transition smooths the swap. */
+.nav-cta {
+  border-color: #b53029 !important;
+  background-color: #b53029 !important;
+  color: #fff !important;
+  transition: background-color .3s ease, color .3s ease, border-color .3s ease !important;
+}
+.nav-cta:hover, .nav-cta:focus-visible, .nav-cta:active {
+  border-color: #b53029 !important;
+  background-color: #fff !important;
+  color: #b53029 !important;
+}
 
 /* The hero is a crisp image panel, very slightly inset so a thin band of the
    dust canvas shows down each side and behind the header. */

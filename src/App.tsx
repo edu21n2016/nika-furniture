@@ -137,6 +137,7 @@ function BrandCursor() {
 function Header() {
   const [open, setOpen] = useState(false)
   const [current, setCurrent] = useState('home')
+  const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
     const ids = navItems.map(x => x.toLowerCase().replace(' ', '-'))
     const onScroll = () => {
@@ -146,12 +147,13 @@ function Header() {
         if (el && el.getBoundingClientRect().top <= 140) active = id
       }
       setCurrent(active)
+      setScrolled(window.scrollY > 40)
     }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-  return <header className="site-header fixed inset-x-0 top-0 z-50 text-stone-100"><nav className="nav-bar mx-auto flex h-20 max-w-7xl items-center justify-between px-6 md:px-8"><a href="#home" aria-label="ANIKA home"><img src="/images/logow-removebg-preview.png" alt="ANIKA" className="h-12 w-30 object-contain object-left drop-shadow-md" /></a><div className="hidden items-center gap-2 md:flex">{navItems.map(x => <a key={x} href={slug(x)} className={`nav-link rounded-full px-4 py-2 text-sm font-medium tracking-wide uppercase transition-colors duration-300 ${current === x.toLowerCase().replace(' ', '-') ? 'is-current' : ''}`}>{x}</a>)}</div><a href="#contact" className="nav-cta hidden border border-white/50 bg-white/10 px-6 py-3 text-xs tracking-widest uppercase transition-colors duration-300 md:block">Explore Our Work</a><button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Toggle navigation" aria-expanded={open}><Menu /></button></nav>{open && <div className="border-t border-white/10 bg-stone-950/90 px-6 pb-5 backdrop-blur-md md:hidden">{navItems.map(x => <a key={x} href={slug(x)} className="nav-link block px-2 py-3 text-base tracking-wide uppercase">{x}</a>)}</div>}</header> }
+  return <header className={`site-header fixed inset-x-0 top-0 z-50 text-stone-100${scrolled ? ' is-scrolled' : ''}`}><nav className="nav-bar mx-auto flex h-20 max-w-7xl items-center justify-between px-6 md:px-8"><a href="#home" aria-label="ANIKA home"><img src="/images/logow-removebg-preview.png" alt="ANIKA" className="h-12 w-30 object-contain object-left drop-shadow-md" /></a><div className="hidden items-center gap-2 md:flex">{navItems.map(x => <a key={x} href={slug(x)} className={`nav-link rounded-full px-4 py-2 text-sm font-medium tracking-wide uppercase transition-colors duration-300 ${current === x.toLowerCase().replace(' ', '-') ? 'is-current' : ''}`}>{x}</a>)}</div><a href="#contact" className="nav-cta hidden border border-white/50 bg-white/10 px-6 py-3 text-xs tracking-widest uppercase transition-colors duration-300 md:block">Explore Our Work</a><button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Toggle navigation" aria-expanded={open}><Menu /></button></nav>{open && <div className="border-t border-white/10 bg-stone-950/90 px-6 pb-5 backdrop-blur-md md:hidden">{navItems.map(x => <a key={x} href={slug(x)} className="nav-link block px-2 py-3 text-base tracking-wide uppercase">{x}</a>)}</div>}</header> }
 function Hero() {
   const [slide, setSlide] = useState(0)
   useEffect(() => { const timer = window.setInterval(() => setSlide((value) => (value + 1) % heroSlides.length), 6500); return () => window.clearInterval(timer) }, [])
