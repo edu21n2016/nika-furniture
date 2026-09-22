@@ -17,8 +17,7 @@ function makeBackgroundParticle(width: number, height: number, fresh = false): B
     speed: random(.34, 1.04) * (depth > .72 ? 1.28 : 1),
     size: depth > .9 ? random(1.8, 3) : depth > .48 ? random(1, 1.9) : random(.62, 1.16),
     length: depth > .76 ? random(2, 4.8) : random(.7, 2.6),
-    alpha: depth > .85 ? random(.58, .78) : depth > .42 ? random(.34, .60) : random(.18, .38),
-    wave: random(8, 36),
+    alpha: depth > .85 ? random(.58, .78) : depth > .42 ? random(.34, .60) : random(.18, .38),    wave: random(8, 36),
     phase: random(0, Math.PI * 2),
     color: depth > .88 ? '130, 72, 42' : depth > .56 ? '166, 109, 58' : '194, 151, 92',
   }
@@ -106,7 +105,7 @@ function resizeScene(scene: Scene, canvas: HTMLCanvasElement) {
   canvas.style.height = `${height}px`
   scene.context.setTransform(density, 0, 0, density, 0, 0)
   scene.size = { width, height, density }
-  const count = width < 720 ? 4200 : 8200
+  const count = width < 720 ? 3200 : 5600
   scene.background = Array.from({ length: count }, () => makeBackgroundParticle(width, height, true))
   if (scene.logoImage.complete && scene.logoImage.naturalWidth) scene.logoParticles = makeLogoParticles(width, height)
 }
@@ -114,6 +113,11 @@ function resizeScene(scene: Scene, canvas: HTMLCanvasElement) {
 function drawBackground(scene: Scene, time: number) {
   const { context } = scene
   const { width, height } = scene.size
+  // The field sits one level back from the content. Individually the chips are
+  // rendered faint enough that no single one competes with the typography; the
+  // number of chips is what makes the dust read as a moving surface, not how bold
+  // each one is. Raise this toward 1 if the dust ever needs to come forward.
+  const DEPTH = 0.62
   for (const particle of scene.background) {
     particle.x -= particle.speed
     particle.y += Math.sin(time * .00042 + particle.phase) * .16
@@ -122,7 +126,7 @@ function drawBackground(scene: Scene, time: number) {
     // Full presence at the right; a measured fade begins near centre and continues left.
     const leftProgress = clamp(particle.x / (width * .35), 0, 1)
     const fade = particle.x < width * .35 ? .18 + leftProgress * .82 : 1
-    context.globalAlpha = particle.alpha * fade
+    context.globalAlpha = particle.alpha * fade * DEPTH
     context.fillStyle = `rgb(${particle.color})`
     context.save()
     context.translate(particle.x, particle.y + Math.sin(time * .0007 + particle.phase) * particle.wave)

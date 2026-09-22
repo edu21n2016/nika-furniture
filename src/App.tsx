@@ -185,7 +185,7 @@ function Signature() {
   const [active, setActive] = useState<Item | null>(null)
   const open = (item: Item) => setActive(item)
   return (
-    <section id="furniture" className="relative scroll-mt-24 px-6 pb-16 pt-12 md:px-8 md:pb-20 md:pt-14">
+    <section id="furniture" className="relative scroll-mt-24 px-6 pb-6 pt-12 md:px-8 md:pb-8 md:pt-14">
       {/* Wider than the text column on purpose, so the gallery reads as the hero of
           this section. md:px-8 gutter plus max-w-[1560px] leaves a slim but clearly
           intentional margin at a 1440px viewport — enough to read as designed
@@ -195,7 +195,9 @@ function Signature() {
         {/* Full-width headline that assembles itself from wood chips flying in from
             all four edges — and replays every time the section scrolls into view. */}
         {/* Height scales with the viewport so the auto-fitted letters are never
-            clipped top or bottom, and the text sits inside a centered column. */}
+            clipped top or bottom, and the text sits inside a centered column. The box
+            is symmetric about the page centre, and the particle mask centres its own
+            text within it, so the word stays optically centred at every width. */}
         <ParticleHeadline text="SIGNATURE PIECES" mode="assemble" weight={300} className="mx-auto h-[64px] w-full max-w-[880px] md:h-[112px]" />
         {/* Description: a step up from the muted body copy elsewhere — medium weight
             and a slightly larger size so it reads as an intentional lead-in to the
@@ -227,7 +229,7 @@ function Signature() {
         {/* Centred showroom CTA under the whole gallery. Sized and weighted like a
             navigation control rather than a shopping button: it lifts slightly on
             hover, the fill wipes to burgundy, and the arrow shifts with it. */}
-        <div className="mt-14 flex justify-center md:mt-16">
+        <div className="mt-10 flex justify-center md:mt-12">
           <a
             href="#furniture"
             className="view-all-btn inline-flex items-center gap-3 border border-stone-900/25 bg-transparent px-9 py-4 text-[10px] tracking-[.25em] text-stone-900 uppercase"
@@ -241,29 +243,101 @@ function Signature() {
     </section>
   )
 }
-// New Arrivals — the rail drifts right-to-left on its own, forever. It is a CSS
-// marquee rather than a scroll container: the card list is rendered twice inside a
-// track that translates -50%, so the second copy is always sliding in behind the
-// first and the loop never shows a seam. The 4:5 portrait frames and fixed card
-// width keep the row even as it moves. Hovering or focusing pauses the glide so a
-// visitor can read a card, and reduced-motion users get a static row they can scroll.
+// New Arrivals — the rail drifts right-to-left on its own, forever. The card list is
+// rendered twice inside a track that translates -50%, so the second copy is always
+// sliding in behind the first and the loop never shows a seam. The animation is
+// paused while the pointer is over the rail, which is what makes manual control
+// possible: a wheel or horizontal trackpad gesture over the rail advances it himself.
+// Reduced-motion users get a static row they can scroll normally.
 function NewArrivals() {
   const railRef = useRef<HTMLDivElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+
+  // A hand-driven NUDGE on top of the CSS loop.
+  //
+  // The track is animated by CSS, so its transform is not a value React owns. Rather
+  // than fight the animation by writing to the same transform, the manual offset is
+  // kept in a CSS custom property and composed in: the track's transform is
+  // `translateX(calc(var(--marquee-shift) - 50%))`, and this effect only ever adds to
+  // `--marquee-shift`. That way a wheel spin and the idle drift add up instead of
+  // overwriting each other. The shift is wrapped to one group width so it cannot grow
+  // without bound, and the duplicated card list is what makes the wrap invisible.
+  useEffect(() => {
+    const rail = railRef.current
+    const track = trackRef.current
+    if (!rail || !track) return undefined
+
+    // One half of the track — the width of a single copy of the ten cards, including
+    // the trailing gap, which is exactly how far the animation travels.
+    const groupWidth = () => track.scrollWidth / 2 || 1
+
+    let shift = 0
+    // Wheel deltas arrive in bursts; accumulating them into one pending value and
+    // flushing once per frame keeps the movement smooth instead of steppy.
+    let pending = 0
+    let frame = 0
+
+    const flush = () => {
+      frame = 0
+      if (!pending) return
+      shift += pending
+      pending = 0
+      const width = groupWidth()
+      // Wrap into (-width, 0] so the value stays in the range the animation expects.
+      shift = -(((-shift % width) + width) % width)
+      track.style.setProperty('--marquee-shift', `${shift}px`)
+    }
+
+    // PAGE FIRST. A vertical wheel belongs to the page.
+    //
+    // The rail used to swallow every wheel event, so arriving at New Arrivals from
+    // above and scrolling down simply advanced the cards and the page never moved —
+    // the visitor got stuck in the section. Now the rail only takes a gesture it can
+    // actually act on:
+    //
+    //   • a genuine horizontal gesture (trackpad swipe, shift+wheel) drives the cards
+    //   • a vertical wheel only drives them while there is nothing left to reveal
+    //     below, so the page scrolls down first and the rail takes over at the end
+    //
+    // Either way the cards stay steerable — that behaviour is kept — but scrolling the
+    // page always wins the race.
+    const atPageBottom = () =>
+      window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 3
+
+    const onWheel = (event: WheelEvent) => {
+      const horizontal = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+      if (!horizontal) {
+        // Vertical, over the rail: the customer asked for the page to keep moving when
+        // arriving here from above. Once the page has nowhere further to go the rail
+        // takes the vertical wheel again, so the cards never become unreachable.
+        if (!atPageBottom()) return
+      }
+      const delta = horizontal ? event.deltaX : event.deltaY
+      if (!delta) return
+      // Only the gesture the rail is actually consuming is prevented, so a vertical
+      // wheel over the rail scrolls the page as normal.
+      event.preventDefault()
+      pending += delta
+      if (!frame) frame = window.requestAnimationFrame(flush)
+    }
+
+    rail.addEventListener('wheel', onWheel, { passive: false })
+    return () => {
+      rail.removeEventListener('wheel', onWheel)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [])
 
   return (
-    <section className="relative px-6 pb-24 pt-12 md:px-8 md:pb-32 md:pt-14">
-      {/* Solid type, not particles: the title is real text in the woody brand tone,
-          set bold and at the same box height as the Signature Pieces headline. It
-          slides right-to-left on its own in a marquee rail, so the word keeps
-          travelling without the letterforms ever breaking up. */}
+    <section className="relative px-6 pb-12 pt-6 md:px-8 md:pb-16 md:pt-8">
+      {/* Solid type, not particles, and NOT moving: the title is static text in the
+          same woody tone the particle headlines average out to, so the three section
+          titles read as one family — but only the image rail below it travels. */}
       <div className="mx-auto max-w-[1560px]">
-        <div className="arrivals-marquee mx-auto h-[64px] w-full max-w-[880px] md:h-[112px]">
-          <span className="arrivals-marquee__word">NEW ARRIVALS</span>
-          <span className="arrivals-marquee__word" aria-hidden="true">NEW ARRIVALS</span>
-        </div>
+        <h2 className="arrivals-title">NEW ARRIVALS</h2>
         {/* The supporting line sits directly on the page background — no panel — now
             that nothing is moving underneath it. */}
-        <p className="mx-auto mt-6 mb-14 max-w-xl text-center text-sm leading-7 text-stone-700 md:mt-8 md:mb-16">
+        <p className="mx-auto mt-6 mb-11 max-w-xl text-center text-sm leading-7 text-stone-700 md:mt-8 md:mb-12">
           The latest pieces to leave our workshop — a slow drift through the full rail.
         </p>
       </div>
@@ -273,7 +347,7 @@ function NewArrivals() {
           list is printed twice; the duplicate is hidden from assistive tech, since it
           is the same ten pieces and only exists to close the loop. */}
       <div id="arrivals-rail" ref={railRef} className="arrivals-rail -mx-6 md:-mx-8">
-        <div className="arrivals-rail__track">
+        <div className="arrivals-rail__track" ref={trackRef}>
           {[0, 1].map((pass) => (
             <div className="arrivals-rail__group" key={pass} aria-hidden={pass === 1}>
               {newArrivals.map((item, index) => (
@@ -296,9 +370,10 @@ function NewArrivals() {
   )
 }
 
-// Wood Work / "Who We Are". The workshop photograph on the right, larger than before,
-// with a floating two-stat card overlapping its bottom corner; the copy on the left,
-// which now sits on a plain white card so every word is legible against the dust.
+// Wood Work / "Who We Are". The workshop photograph on the left, flush against a
+// white copy card on its right that matches the photograph's exact size, with a
+// floating stat card sitting on the image's far-left edge. The card sits on white so
+// every word is legible against the dust.
 function Craftsmanship() {
   const promises = [
     { title: 'Trusted Furniture Store', text: 'Handcrafted with attention to material and detail.' },
@@ -308,25 +383,31 @@ function Craftsmanship() {
   // One proof figure: the years of experience. The client count was dropped at the
   // client's request, so the card carries a single number and reads as a statement
   // rather than a list.
-  const stats = [{ value: '10', label: 'Years of Experience' }]
+  const stats = [{ value: '10+', label: 'Years of Experience' }]
   return (
-    // Trimmed top padding: the Signature gallery already ends with the CTA and its
-    // own generous bottom padding, so the old py-24 stacked a second full gap on top
-    // of it and left a dead band between the two sections.
-    <section className="relative px-6 pb-24 pt-8 md:px-8 md:pb-32 md:pt-10">
-      {/* Two columns pressed together: the copy card on the right and the photograph
-          on the left, with no gap at all between them (`gap-0`). The columns only
-          split at lg, so on smaller screens the image stacks above the card and the
-          pair still reads as one block. */}
-      <div className="mx-auto grid max-w-7xl items-stretch lg:grid-cols-[1.15fr_1fr]">
+    // Only a small inset above: the rail already closes with its own bottom padding,
+    // so a large value here stacks a dead white band between the two sections.
+    <section className="relative px-6 pb-16 pt-6 md:px-8 md:pb-24 md:pt-8">
+      {/* Two columns pressed together: the photograph on the left and the white copy
+          card on the right, with no gap at all between them. The columns are equal
+          width now (`1fr 1fr`), so the white panel is as large as the image rather
+          than a narrower strip beside it. The split only happens at lg; below that
+          the image stacks above the card and the pair still reads as one block. */}
+      <div className="mx-auto grid max-w-[1500px] items-stretch lg:grid-cols-2">
         {/* The photograph plus its floating proof card, on the left. It stretches to
             the card's height so the two remain flush however the copy wraps. */}
         <div className="relative lg:order-1">
           <img
             src={furniture[3].image}
             alt="Hands at work in the ANIKA workshop"
-            className="h-[360px] w-full rounded-sm object-cover md:h-[560px] lg:h-full lg:rounded-r-none"
+            className="h-[440px] w-full rounded-sm object-cover md:h-[680px] lg:h-full lg:rounded-bl-none lg:rounded-r-none"
           />
+          {/* The proof card hangs off the image's bottom-left corner: most of it sits
+              clear of the photograph, on the page background, with only its top-right
+              corner overlapping the image — so the figure reads as a label pinned to
+              the last edge rather than a card resting inside the photo. It only works
+              from lg up, where the section has room; below that it returns to a plain
+              card inside the image (see .who-badge in the stylesheet). */}
           <div className="who-badge">
             {stats.map((stat) => (
               <div key={stat.label} className="who-badge__stat">
@@ -342,15 +423,27 @@ function Craftsmanship() {
             butts directly against the photograph: square on the left, rounded on the
             right, so the two columns read as a single attached panel. */}
         <div className="who-card lg:order-2">
+          {/* Same particle engine as SIGNATURE PIECES: the chips fly in from all four
+              edges and assemble the words every time the block scrolls into view. It
+              is larger here than the old text version — the chip mass is what gives it
+              equal weight to the other two section titles. */}
           <ParticleHeadline
             text="WHO WE ARE"
             mode="assemble"
-            maxFontSize={40}
+            maxFontSize={72}
             weight={700}
-            className="h-[38px] w-full max-w-[320px]"
+            className="mb-4 h-[44px] w-full max-w-[400px] md:mb-5 md:h-[66px]"
           />
           <h2 className="who-title">Let us turn your home into a sanctuary.</h2>
-          <ul className="mt-9 space-y-6">
+          {/* One added sentence of breathing room: the copy column now carries the
+              same weight as the photograph beside it instead of ending abruptly
+              above the three promises. */}
+          <p className="who-lead">
+            Every piece begins in our Addis Ababa workshop, where seasoned solid wood is
+            shaped, joined and finished by hand — measured to your space and built to be
+            lived with for decades, not seasons.
+          </p>
+          <ul className="mt-10 space-y-7">
             {promises.map((promise) => (
               <li key={promise.title} className="flex gap-4">
                 {/* Gold tick mark, drawn inline so it stays crisp at any size. */}
@@ -367,56 +460,6 @@ function Craftsmanship() {
             ))}
           </ul>
         </div>
-      </div>
-    </section>
-  )
-}
-
-// Was bg-stone-900. Now the shared cream surface, so the numbers sit in the same
-// environment as the rest of the page.
-function Achievements() {
-  return (
-    <section className="relative px-6 py-20 md:px-8 md:py-28">
-      <div className="mx-auto max-w-7xl">
-        <p className="mb-6 text-[10px] tracking-[.3em] text-stone-500 uppercase">04 / Our work in numbers</p>
-        <h2 className="mb-14 font-serif text-4xl font-light tracking-tight text-stone-900 md:text-5xl">OUR WORK IN NUMBERS</h2>
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
-          {achievements.map(([value, label]) => (
-            <div key={label}>
-              <p className="font-serif text-5xl font-light text-stone-900 md:text-6xl">{value}</p>
-              <p className="mt-3 text-[10px] leading-5 tracking-widest text-stone-500 uppercase">{label}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-10 text-[10px] tracking-widest text-stone-400 uppercase">Figures pending client confirmation.</p>
-      </div>
-    </section>
-  )
-}
-
-// Was a full-bleed dark photograph with a black gradient overlay — a third
-// background treatment. It now sits on the shared cream surface, with the
-// showroom photograph kept as a framed image inside the panel so the room still
-// reads without replacing the homepage background.
-function Showroom() {
-  return (
-    <section className="relative px-6 py-24 md:px-8 md:py-32">
-      <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2">
-        <div>
-          <p className="mb-4 text-[10px] tracking-[.3em] text-stone-500 uppercase">05 / Visit us</p>
-          <h2 className="max-w-2xl font-serif text-4xl font-light leading-[.95] tracking-tight text-stone-900 md:text-6xl">STEP INTO OUR SHOWROOM</h2>
-          <p className="mt-7 max-w-md text-sm leading-7 text-stone-600">
-            Experience the furniture, materials, finishes and craftsmanship in person before a single piece is made for your space.
-          </p>
-          <a href="#contact" className="mt-10 inline-flex items-center gap-2 border bg-[#b53029] px-6 py-3 text-[10px] tracking-widest text-white uppercase transition hover:border-[#b53029] hover:bg-white hover:text-[#b53029]">
-            Visit Our Showroom <ArrowUpRight size={14} />
-          </a>
-        </div>
-        <img
-          src={furniture[0].image}
-          alt="ANIKA showroom interior"
-          className="h-[320px] w-full rounded-sm object-cover md:h-[460px]"
-        />
       </div>
     </section>
   )
@@ -597,8 +640,6 @@ export function App() {
         <Signature />
         <NewArrivals />
         <Craftsmanship />
-        <Achievements />
-        <Showroom />
         <Workshop />
         <Contact />
       </main>
