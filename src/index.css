@@ -8,9 +8,27 @@ body { min-width: 320px; margin: 0; background: #fdfcf9; }
 *, *::before, *::after { box-sizing: border-box; }
 button, input, select, textarea { font: inherit; }
 
-/* Existing full-page dust canvas remains behind the new Tailwind homepage. */
-.particle-scene { position: fixed; z-index: 0; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
+/* Dust canvas: the single fixed background layer. Pinned to the viewport, behind
+   everything, and click-through so it never intercepts a tap. The id is the
+   canonical hook; the class is kept because the component also renders it. */
+#particle-canvas,
+.particle-scene {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Content sits one level above the dust. #root lifts the whole app, and the
+   explicit rule on main + its sections keeps typography, image cards and buttons
+   rendering crisply above the canvas even if an ancestor ever loses its stacking
+   context. */
 #root { position: relative; z-index: 1; }
+main,
+main > section { position: relative; z-index: 1; }
 
 /* Navigation is a light frosted glass bar in every state — the same family as
    the near-white page, so over a pale section there is no seam and no coloured
@@ -61,16 +79,39 @@ button, input, select, textarea { font: inherit; }
   background-color: #fff !important;
   color: #b53029 !important;
 }
+/* Logo mark: the tallest item in the header so it reads at a glance. It bobs on
+   its own while the page is idle, with enough travel (6px each way, 3.2s loop) to
+   be noticed without pulling the eye away from the nav. The animation is
+   transform-only, so it never nudges the links or the CTA off the shared centre
+   line, and the 96px bar leaves room for the 6px without clipping. */
+.brand-mark__img {
+  animation: logo-bob 3.2s ease-in-out infinite;
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+@keyframes logo-bob {
+  0%, 100% { transform: translateY(-6px) scale(1); }
+  50%      { transform: translateY(6px) scale(1.06); }
+}
+.brand-mark:hover .brand-mark__img { animation-play-state: paused; }
+
+/* The link fills the 56px header line so all three items share one centre, but
+   the active underline is anchored a fixed distance above the text block instead
+   of the box bottom - otherwise the rule drifts away from the label. */
 .nav-link {
   position: relative;
-  padding-bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding-bottom: 0;
 }
 .nav-link:hover, .nav-link:focus-visible { animation: nav-shake .45s ease-in-out; }
 .nav-link::after {
   content: '';
   position: absolute;
   left: 50%;
-  bottom: 0;
+  /* Anchored just under the label rather than the bottom of the 56px box. */
+  bottom: 14px;
   height: 2px;
   width: 0;
   background: #b53029;
@@ -116,6 +157,292 @@ button, input, select, textarea { font: inherit; }
 
 @media (prefers-reduced-motion: reduce) {
   .nav-link:hover, .nav-link:focus-visible { animation: none; }
+  .brand-mark__img { animation: none; }
+}
+
+/* "View All Products" — a showroom navigation control, not a shopping button.
+   At rest it is a solid burgundy block, so it reads as the primary action closing
+   the section. On hover/focus the red fill wipes away and the control resolves to
+   a light surface: the background turns cream-white, the label and arrow turn
+   burgundy, and the border matches. The whole control also lifts 2px and the
+   arrow slides right — motion without any heavy shadow. */
+.view-all-btn {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+  isolation: isolate;
+  border-color: #b53029;
+  color: #fff;
+  transition: color .35s ease, border-color .35s ease, transform .35s ease;
+}
+.view-all-btn::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  /* Sits behind the label as the resting red field... */
+  background: #b53029;
+  transform: scaleY(1);
+  transform-origin: 50% 0%;
+  transition: transform .35s ease;
+}
+/* ...and the cream surface wipes up over it on hover. */
+.view-all-btn::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: #fdfcf9;
+  transform: scaleY(0);
+  transform-origin: 50% 100%;
+  transition: transform .35s ease;
+}
+.view-all-btn__arrow { transition: transform .35s ease; }
+.view-all-btn:hover,
+.view-all-btn:focus-visible {
+  color: #b53029;
+  border-color: #b53029;
+  transform: translateY(-2px);
+}
+.view-all-btn:hover::after,
+.view-all-btn:focus-visible::after { transform: scaleY(1); }
+.view-all-btn:hover .view-all-btn__arrow,
+.view-all-btn:focus-visible .view-all-btn__arrow { transform: translateX(4px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .view-all-btn, .view-all-btn::before, .view-all-btn::after, .view-all-btn__arrow { transition: none; }
+  .view-all-btn:hover, .view-all-btn:focus-visible { transform: none; }
+}
+
+/* ── New Arrivals rail ───────────────────────────────
+   A self-running marquee, not a scroll container. The card list is printed twice in
+   a flex track that translates -50% on a linear loop: at the moment the first copy
+   has fully left, the second copy sits exactly where it started, so the seam is
+   invisible and the row simply keeps gliding right-to-left. Each card is a fixed
+   436px (336px on mobile) with a 4:5 portrait frame, so the row stays even. */
+.arrivals-rail {
+  overflow: hidden;
+  /* Room for the hover zoom to grow without being clipped by the rail. */
+  padding-top: 8px;
+  padding-bottom: 20px;
+}
+
+.arrivals-rail__track {
+  display: flex;
+  width: max-content;
+  animation: arrivals-rail-glide linear infinite;
+  /* Duration is set from the card count below, so speed stays constant as the rail
+     grows: 34s for the 10-card set (two passes of 10 × 460px ≈ 9200px). */
+  animation-duration: 34s;
+}
+
+.arrivals-rail:hover .arrivals-rail__track,
+.arrivals-rail:focus-within .arrivals-rail__track { animation-play-state: paused; }
+
+.arrivals-rail__group {
+  display: flex;
+  gap: 24px;
+  /* The gap has to sit *inside* each half of the track, otherwise the track is one
+     gap wider than two halves and the -50% loop lands slightly short of the seam. */
+  padding-right: 24px;
+}
+
+/* Exactly -50%, because the track is two identical groups side by side. */
+@keyframes arrivals-rail-glide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.arrival-card {
+  flex: 0 0 auto;
+  width: 336px;
+}
+@media (min-width: 768px) {
+  .arrival-card { width: 436px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No glide: the row becomes an ordinary scrollable strip, with the duplicate copy
+     removed so the ten pieces appear once. */
+  .arrivals-rail { overflow-x: auto; scrollbar-width: none; }
+  .arrivals-rail::-webkit-scrollbar { display: none; }
+  .arrivals-rail__track { animation: none; }
+  .arrivals-rail__group { padding-right: 0; }
+  .arrivals-rail__group + .arrivals-rail__group { display: none; }
+}
+
+/* The frame is the clipping container; the image zooms inside it on hover. */
+.arrival-card__frame {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgba(28, 25, 23, .18);
+}
+.arrival-card__frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .7s ease;
+}
+.arrival-card:hover .arrival-card__frame img { transform: scale(1.05); }
+
+/* Corner tag. Sits above the photo, small and restrained so it reads as a
+   detail rather than a shop banner. */
+.discount-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  background: #C84B31;
+  color: #fff;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: .04em;
+  border-radius: 2px;
+}
+
+/* Rail arrows: same interaction language as the view-all button — outline at
+   rest, burgundy fill on hover. */
+.rail-btn { transition: color .3s ease, border-color .3s ease, background-color .3s ease; }
+.rail-btn:hover, .rail-btn:focus-visible { border-color: #b53029; background-color: #b53029; color: #fff; }
+
+/* ── New Arrivals title ─────────────────────────
+   Solid bold type in the woody brand tone, not particles: the word keeps travelling
+   but the letterforms never break apart. Two identical spans inside an overflow-hidden
+   rail, each animating -100%, so the copy that leaves at the left is replaced by the
+   one arriving from the right with no gap and no jump. */
+.arrivals-marquee {
+  display: flex;
+  overflow: hidden;
+  /* The wide type is a little taller than its box; the clip keeps that tight. */
+  align-items: center;
+}
+.arrivals-marquee__word {
+  flex: none;
+  width: 100%;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+  text-align: center;
+  color: #96582c;
+  animation: arrivals-glide 18s linear infinite;
+}
+@media (min-width: 768px) {
+  .arrivals-marquee__word { font-size: 72px; }
+}
+@keyframes arrivals-glide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+/* ── Who We Are ────────────────────────────────
+   One solid white card wraps the whole copy column — the particle-built section
+   identity, the sentence and the three promises — so every word sits on white
+   rather than on the dust field. On desktop it butts straight against the
+   photograph: square on the side that touches the image, rounded on the outside, and
+   no border or shadow on the shared edge, so the two columns read as one attached
+   panel rather than two cards with a gap. */
+.who-card {
+  padding: 30px 32px 34px;
+  border: 1px solid rgba(28, 25, 23, .07);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 26px 60px -42px rgba(28, 25, 23, .4);
+}
+@media (min-width: 1024px) {
+  .who-card {
+    padding: 40px 44px 44px;
+    border-left: 0;
+    border-radius: 0 6px 6px 0;
+  }
+}
+
+.who-title {
+  margin: 16px 0 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -.01em;
+  color: #12100E;
+}
+@media (min-width: 768px) {
+  .who-title { font-size: 1.75rem; }
+}
+
+/* The particle headline canvas is decoration only; its words live in a hidden span
+   for assistive tech and search, so the graphic is never read out twice. */
+.particle-headline__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrivals-marquee__word { animation: none; }
+  /* With the glide off, the second copy would just sit after the first: drop it. */
+  .arrivals-marquee__word + .arrivals-marquee__word { display: none; }
+}
+
+.who-tick {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border: 1px solid rgba(197, 160, 89, .55);
+  border-radius: 9999px;
+  color: #C5A059;
+}
+
+/* The floating proof card. The photograph is now the left column and its copy sits
+   flush to its right, so the card is anchored to the image's bottom-LEFT corner
+   instead — the only free corner left. It overhangs slightly and sits above the photo
+   with a soft shadow, which is the layered depth the section wants. */
+.who-badge {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  z-index: 2;
+  background: #fff;
+  padding: 16px 26px;
+  border-radius: 3px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .18);
+}
+@media (min-width: 1024px) {
+  .who-badge { left: -26px; bottom: 32px; }
+}
+.who-badge__value {
+  display: block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: #b53029;
+}
+.who-badge__label {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.3;
+  color: #78716c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrival-card__frame img { transition: none; }
+  .arrival-card:hover .arrival-card__frame img { transform: none; }
 }
 
 /* Signature tiles: clean image cards with a soft light that follows the cursor. */
@@ -156,6 +483,17 @@ button, input, select, textarea { font: inherit; }
   .cursor-light { transition: opacity .2s ease; }
 }
 .site-shell { min-height: 100vh; opacity: 0; animation: page-arrive .55s ease 6.4s forwards; }
+
+/* ── One continuous background ─────────────────────────
+   The particle canvas IS the homepage surface. Nothing is layered on top of it:
+   the shell paints no background, and the sections paint no panels either. The
+   content sits directly on the existing background, so the dust field runs
+   unbroken from the hero to the footer and the page reads as one environment.
+
+   Readability is handled per-element (text colour, image frames, buttons) rather
+   than by putting a translucent sheet behind every section. */
+.site-shell { background: transparent; }
+
 @keyframes page-arrive { to { opacity: 1; } }
 @keyframes reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @media (pointer: fine) {

@@ -45,6 +45,25 @@ export const latestCreations: Item[] = [
   { title: 'Workshop Series No. 4', text: 'Hand-carved detailing from the bench.', image: furniture[3].image },
 ]
 
+// New Arrivals — the horizontal carousel on the homepage.
+// Ten entries, so the rail is always wider than the viewport twice over and the
+// right-to-left drift never runs out of cards to bring in. `tag` is the small corner
+// badge; leave it undefined on a card to omit the badge entirely.
+export type Arrival = Item & { tag?: string }
+
+export const newArrivals: Arrival[] = [
+  { title: 'The Addis Dining Room', text: 'Solid walnut / Made to order', image: furniture[2].image, tag: '-15% OFF' },
+  { title: 'Quiet Frame Bed', text: 'Walnut / Hand finished', image: furniture[1].image, tag: 'New' },
+  { title: 'Linen Lounge Sofa', text: 'Upholstery / Solid frame', image: furniture[0].image, tag: '-15% OFF' },
+  { title: 'Minimalist Sideboard', text: 'Oak / Oil finish', image: furniture[4].image },
+  { title: 'Carved Detailing', text: 'Workshop / By hand', image: furniture[3].image, tag: 'Limited' },
+  { title: 'Bespoke Dining Table', text: 'Solid wood / Made to order', image: furniture[2].image, tag: '-15% OFF' },
+  { title: 'Oak Reading Chair', text: 'Oak / Hand oiled', image: furniture[0].image, tag: 'New' },
+  { title: 'Walnut Console', text: 'Walnut / Dovetail joinery', image: furniture[4].image },
+  { title: 'Platform Bed Frame', text: 'Solid wood / Low profile', image: furniture[1].image, tag: 'New' },
+  { title: 'Joined Bench', text: 'Workshop / Hand cut', image: furniture[3].image, tag: 'Limited' },
+]
+
 export const craftsmanshipSteps: Item[] = [
   { title: '01 — SELECT', text: 'Carefully selected materials', image: furniture[3].image },
   { title: '02 — CRAFT', text: 'Skilled woodworking and construction', image: furniture[4].image },

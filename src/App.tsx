@@ -5,12 +5,11 @@ import { ParticleHeadline } from './ParticleHeadline'
 import {
   achievements,
   contact,
-  craftsmanshipSteps,
   furniture,
   heroSlides,
   Item,
-  latestCreations,
   navItems,
+  newArrivals,
   signaturePieces,
   workshopCaptions,
 } from './content'
@@ -154,7 +153,12 @@ function Header() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-  return <header className={`site-header fixed inset-x-0 top-0 z-50${scrolled ? ' is-scrolled' : ''}`}><nav className="nav-bar mx-auto flex h-20 max-w-7xl items-center justify-between px-6 md:px-8"><a href="#home" aria-label="ANIKA home"><img src="/images/logow-removebg-preview.png" alt="ANIKA" className="h-12 w-30 object-contain object-left drop-shadow-md" /></a><div className="relative hidden items-center gap-2 md:flex">{navItems.map(x => <a key={x} href={slug(x)} className={`nav-link rounded-full px-4 py-2 text-sm font-medium tracking-wide uppercase transition-colors duration-300 ${current === x.toLowerCase().replace(' ', '-') ? 'is-current' : ''}`}>{x}</a>)}</div><a href="#contact" className="nav-cta hidden border border-white/50 bg-white/10 px-6 py-3 text-xs tracking-widest uppercase transition-colors duration-300 md:block">Explore Our Work</a><button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Toggle navigation" aria-expanded={open}><Menu /></button></nav>{open && <div className="mobile-panel border-t border-white/10 bg-stone-950/90 px-6 pb-5 backdrop-blur-md md:hidden">{navItems.map(x => <a key={x} href={slug(x)} className="nav-link block px-2 py-3 text-base tracking-wide uppercase">{x}</a>)}</div>}</header> }
+  // The three header items (logo, links, CTA) have different natural heights, so
+  // `items-center` alone leaves them looking misaligned. Each is boxed to the same
+  // 56px line, so all three share one centre line down the 96px bar. The links sit
+  // in their own absolutely-centred group so the set is centred on the page, not
+  // merely balanced between the logo and the CTA.
+  return <header className={`site-header fixed inset-x-0 top-0 z-50${scrolled ? ' is-scrolled' : ''}`}><nav className="nav-bar relative mx-auto flex h-24 max-w-[1400px] items-center justify-between gap-6 px-6 md:px-8"><a href="#home" aria-label="ANIKA home" className="brand-mark flex h-[76px] shrink-0 items-center overflow-visible"><img src="/images/logow-removebg-preview.png" alt="ANIKA" className="brand-mark__img h-[76px] w-auto max-w-none object-contain object-left" /></a><div className="relative hidden h-14 items-center justify-center gap-2 md:absolute md:left-1/2 md:-translate-x-1/2 md:flex">{navItems.map(x => <a key={x} href={slug(x)} className={`nav-link rounded-full px-4 text-sm font-medium tracking-wide uppercase transition-colors duration-300 ${current === x.toLowerCase().replace(' ', '-') ? 'is-current' : ''}`}>{x}</a>)}</div><a href="#contact" className="nav-cta hidden shrink-0 items-center border border-white/50 bg-white/10 px-7 py-3 text-[11px] leading-none tracking-widest uppercase transition-colors duration-300 md:inline-flex">Explore Our Work</a><button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Toggle navigation" aria-expanded={open}><Menu /></button></nav>{open && <div className="mobile-panel border-t border-white/10 bg-stone-950/90 px-6 pb-5 backdrop-blur-md md:hidden">{navItems.map(x => <a key={x} href={slug(x)} className="nav-link block px-2 py-3 text-base tracking-wide uppercase">{x}</a>)}</div>}</header> }
 function Hero() {
   const [slide, setSlide] = useState(0)
   useEffect(() => { const timer = window.setInterval(() => setSlide((value) => (value + 1) % heroSlides.length), 6500); return () => window.clearInterval(timer) }, [])
@@ -181,126 +185,238 @@ function Signature() {
   const [active, setActive] = useState<Item | null>(null)
   const open = (item: Item) => setActive(item)
   return (
-    <section id="furniture" className="relative bg-[rgba(253,252,249,0.42)] px-6 pt-12 pb-20 md:px-8 md:pt-14 md:pb-28">
-      {/* Wider than the text column on purpose: the gallery is the hero of this
-          section, so it stretches further towards the page edges — but the
-          section's own px-6 / md:px-8 padding is left intact, so the frames still
-          sit inside a real margin and never touch the viewport edge. */}
-      <div className="mx-auto max-w-7xl">
+    <section id="furniture" className="relative scroll-mt-24 px-6 pb-16 pt-12 md:px-8 md:pb-20 md:pt-14">
+      {/* Wider than the text column on purpose, so the gallery reads as the hero of
+          this section. md:px-8 gutter plus max-w-[1560px] leaves a slim but clearly
+          intentional margin at a 1440px viewport — enough to read as designed
+          breathing space, without the wide band of empty background the narrower
+          container used to leave on each side. */}
+      <div className="mx-auto max-w-[1560px]">
         {/* Full-width headline that assembles itself from wood chips flying in from
             all four edges — and replays every time the section scrolls into view. */}
         {/* Height scales with the viewport so the auto-fitted letters are never
             clipped top or bottom, and the text sits inside a centered column. */}
-        <ParticleHeadline text="SIGNATURE PIECES" className="mx-auto mb-10 h-[64px] w-full max-w-5xl md:mb-16 md:h-[112px]" />
+        <ParticleHeadline text="SIGNATURE PIECES" mode="assemble" weight={300} className="mx-auto h-[64px] w-full max-w-[880px] md:h-[112px]" />
+        {/* Description: a step up from the muted body copy elsewhere — medium weight
+            and a slightly larger size so it reads as an intentional lead-in to the
+            gallery rather than a caption. Still the same stone tone, so it stays in
+            the existing palette. */}
+        <p className="mx-auto mt-6 mb-11 max-w-2xl text-center text-base leading-8 font-medium text-stone-700 md:mt-7 md:mb-12 md:text-lg">
+          Discover a selection of Anika&rsquo;s finest furniture, thoughtfully designed to bring
+          warmth, comfort, and character to every space.
+        </p>
         {/* Five-piece gallery in two columns. Each column is a two-part stack:
 
             left  — a wide tile above the tall feature
             right — three wide tiles
             Every tile in a column shares that column's width, so both outer
             edges run perfectly straight even though the tiles differ in height. */}
-        <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2 md:gap-6">
+        <div className="mx-auto grid max-w-[1560px] gap-4 md:grid-cols-2 md:gap-5">
           {/* Left column: wide tile on top, tall feature below. */}
-          <div className="grid gap-5 md:gap-6">
+          <div className="grid gap-4 md:gap-5">
             <SignatureTile item={signaturePieces[4]} onOpen={() => open(signaturePieces[4])} ratio="aspect-[16/10]" />
             <SignatureTile item={signaturePieces[0]} onOpen={() => open(signaturePieces[0])} ratio="aspect-[4/5]" />
           </div>
           {/* Right column: three wide tiles. */}
-          <div className="grid gap-5 md:gap-6">
+          <div className="grid gap-4 md:gap-5">
             <SignatureTile item={signaturePieces[3]} onOpen={() => open(signaturePieces[3])} ratio="aspect-[16/10]" />
             <SignatureTile item={signaturePieces[2]} onOpen={() => open(signaturePieces[2])} ratio="aspect-[16/10]" />
             <SignatureTile item={signaturePieces[1]} onOpen={() => open(signaturePieces[1])} ratio="aspect-[16/10]" />
           </div>
+        </div>
+        {/* Centred showroom CTA under the whole gallery. Sized and weighted like a
+            navigation control rather than a shopping button: it lifts slightly on
+            hover, the fill wipes to burgundy, and the arrow shifts with it. */}
+        <div className="mt-14 flex justify-center md:mt-16">
+          <a
+            href="#furniture"
+            className="view-all-btn inline-flex items-center gap-3 border border-stone-900/25 bg-transparent px-9 py-4 text-[10px] tracking-[.25em] text-stone-900 uppercase"
+          >
+            View All Products
+            <ArrowRight size={14} className="view-all-btn__arrow" />
+          </a>
         </div>
       </div>
       <PieceLightbox item={active} onClose={() => setActive(null)} />
     </section>
   )
 }
-// Project-focused, not product-focused: no prices, quick-view or inquiry CTAs.
-function LatestCreations() {
+// New Arrivals — the rail drifts right-to-left on its own, forever. It is a CSS
+// marquee rather than a scroll container: the card list is rendered twice inside a
+// track that translates -50%, so the second copy is always sliding in behind the
+// first and the loop never shows a seam. The 4:5 portrait frames and fixed card
+// width keep the row even as it moves. Hovering or focusing pauses the glide so a
+// visitor can read a card, and reduced-motion users get a static row they can scroll.
+function NewArrivals() {
+  const railRef = useRef<HTMLDivElement>(null)
+
   return (
-    <section className="bg-white/78 px-6 py-24 md:px-8 md:py-32">
-      <div className="mx-auto max-w-7xl">
-        <Heading label="02 / Recent work" title="LATEST CREATIONS" />
-        <p className="-mt-4 mb-14 max-w-lg text-sm leading-7 text-stone-600 md:-mt-6">
-          Recent work from our workshop and showroom.
+    <section className="relative px-6 pb-24 pt-12 md:px-8 md:pb-32 md:pt-14">
+      {/* Solid type, not particles: the title is real text in the woody brand tone,
+          set bold and at the same box height as the Signature Pieces headline. It
+          slides right-to-left on its own in a marquee rail, so the word keeps
+          travelling without the letterforms ever breaking up. */}
+      <div className="mx-auto max-w-[1560px]">
+        <div className="arrivals-marquee mx-auto h-[64px] w-full max-w-[880px] md:h-[112px]">
+          <span className="arrivals-marquee__word">NEW ARRIVALS</span>
+          <span className="arrivals-marquee__word" aria-hidden="true">NEW ARRIVALS</span>
+        </div>
+        {/* The supporting line sits directly on the page background — no panel — now
+            that nothing is moving underneath it. */}
+        <p className="mx-auto mt-6 mb-14 max-w-xl text-center text-sm leading-7 text-stone-700 md:mt-8 md:mb-16">
+          The latest pieces to leave our workshop — a slow drift through the full rail.
         </p>
-        <div className="grid gap-10 md:grid-cols-12 md:gap-8">
-          <EditorialFigure item={latestCreations[0]} className="md:col-span-7" ratio="aspect-[4/3]" />
-          <div className="grid gap-10 md:col-span-5">
-            <EditorialFigure item={latestCreations[1]} ratio="aspect-[5/3]" />
-            <EditorialFigure item={latestCreations[2]} ratio="aspect-[5/3]" />
-          </div>
+      </div>
+
+      {/* The rail runs edge to edge: the section's own padding is cancelled with
+          negative margins so the cards pass across the full width of the page. The
+          list is printed twice; the duplicate is hidden from assistive tech, since it
+          is the same ten pieces and only exists to close the loop. */}
+      <div id="arrivals-rail" ref={railRef} className="arrivals-rail -mx-6 md:-mx-8">
+        <div className="arrivals-rail__track">
+          {[0, 1].map((pass) => (
+            <div className="arrivals-rail__group" key={pass} aria-hidden={pass === 1}>
+              {newArrivals.map((item, index) => (
+                <article key={`${pass}-${item.title}-${index}`} className="arrival-card">
+                  <div className="arrival-card__frame">
+                    <img src={item.image} alt={pass === 0 ? item.title : ''} />
+                    {item.tag && <span className="discount-badge">{item.tag}</span>}
+                  </div>
+                  <div className="mt-5">
+                    <h3 className="font-serif text-xl font-light text-stone-900">{item.title}</h3>
+                    <p className="mt-2 text-[10px] tracking-widest text-stone-500 uppercase">{item.text}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     </section>
   )
 }
 
+// Wood Work / "Who We Are". The workshop photograph on the right, larger than before,
+// with a floating two-stat card overlapping its bottom corner; the copy on the left,
+// which now sits on a plain white card so every word is legible against the dust.
 function Craftsmanship() {
+  const promises = [
+    { title: 'Trusted Furniture Store', text: 'Handcrafted with attention to material and detail.' },
+    { title: 'Bespoke Customization', text: 'Tailored to fit your architectural space.' },
+    { title: 'Safe Delivery & Setup', text: 'Direct white-glove installation from our workshop.' },
+  ]
+  // One proof figure: the years of experience. The client count was dropped at the
+  // client's request, so the card carries a single number and reads as a statement
+  // rather than a list.
+  const stats = [{ value: '10', label: 'Years of Experience' }]
   return (
-    <section className="bg-stone-950 px-6 py-24 text-stone-100 md:px-8 md:py-32">
-      <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-2 lg:items-center">
-        <img
-          src={furniture[3].image}
-          alt="Hands at work in the ANIKA workshop"
-          className="h-[420px] w-full object-cover md:h-[620px]"
-        />
-        <div>
-          <Heading label="03 / Our approach" title="MADE BY HAND. DESIGNED TO LAST." dark />
-          <p className="max-w-lg text-sm leading-7 text-stone-300">
-            Every piece begins with the material. We work solid wood by hand, letting grain, weight and
-            proportion guide the design, then finish each surface carefully so the furniture ages well
-            rather than dates.
-          </p>
-          <div className="mt-12 border-t border-white/10">
-            {craftsmanshipSteps.map((step) => (
-              <div key={step.title} className="grid gap-3 border-b border-white/10 py-6 sm:grid-cols-[150px_1fr]">
-                <p className="text-[10px] tracking-[.3em] text-[#d77a66] uppercase">{step.title}</p>
-                <p className="text-sm leading-7 text-stone-300">{step.text}</p>
+    // Trimmed top padding: the Signature gallery already ends with the CTA and its
+    // own generous bottom padding, so the old py-24 stacked a second full gap on top
+    // of it and left a dead band between the two sections.
+    <section className="relative px-6 pb-24 pt-8 md:px-8 md:pb-32 md:pt-10">
+      {/* Two columns pressed together: the copy card on the right and the photograph
+          on the left, with no gap at all between them (`gap-0`). The columns only
+          split at lg, so on smaller screens the image stacks above the card and the
+          pair still reads as one block. */}
+      <div className="mx-auto grid max-w-7xl items-stretch lg:grid-cols-[1.15fr_1fr]">
+        {/* The photograph plus its floating proof card, on the left. It stretches to
+            the card's height so the two remain flush however the copy wraps. */}
+        <div className="relative lg:order-1">
+          <img
+            src={furniture[3].image}
+            alt="Hands at work in the ANIKA workshop"
+            className="h-[360px] w-full rounded-sm object-cover md:h-[560px] lg:h-full lg:rounded-r-none"
+          />
+          <div className="who-badge">
+            {stats.map((stat) => (
+              <div key={stat.label} className="who-badge__stat">
+                <span className="who-badge__value">{stat.value}</span>
+                <p className="who-badge__label">{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
+
+        {/* The entire copy column is one solid white card — heading, sentence and the
+            three promises — so nothing here has to compete with the dust field. It
+            butts directly against the photograph: square on the left, rounded on the
+            right, so the two columns read as a single attached panel. */}
+        <div className="who-card lg:order-2">
+          <ParticleHeadline
+            text="WHO WE ARE"
+            mode="assemble"
+            maxFontSize={40}
+            weight={700}
+            className="h-[38px] w-full max-w-[320px]"
+          />
+          <h2 className="who-title">Let us turn your home into a sanctuary.</h2>
+          <ul className="mt-9 space-y-6">
+            {promises.map((promise) => (
+              <li key={promise.title} className="flex gap-4">
+                {/* Gold tick mark, drawn inline so it stays crisp at any size. */}
+                <span aria-hidden="true" className="who-tick">
+                  <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2.5 8.5l3.5 3.5 7-8" />
+                  </svg>
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-stone-900">{promise.title}</p>
+                  <p className="mt-1 text-sm leading-7 text-stone-600">{promise.text}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   )
 }
 
+// Was bg-stone-900. Now the shared cream surface, so the numbers sit in the same
+// environment as the rest of the page.
 function Achievements() {
   return (
-    <section className="bg-stone-900 px-6 py-20 text-stone-100 md:px-8 md:py-28">
+    <section className="relative px-6 py-20 md:px-8 md:py-28">
       <div className="mx-auto max-w-7xl">
-        <p className="mb-6 text-[10px] tracking-[.3em] text-stone-400 uppercase">04 / Our work in numbers</p>
-        <h2 className="mb-14 font-serif text-4xl font-light tracking-tight md:text-5xl">OUR WORK IN NUMBERS</h2>
+        <p className="mb-6 text-[10px] tracking-[.3em] text-stone-500 uppercase">04 / Our work in numbers</p>
+        <h2 className="mb-14 font-serif text-4xl font-light tracking-tight text-stone-900 md:text-5xl">OUR WORK IN NUMBERS</h2>
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
           {achievements.map(([value, label]) => (
             <div key={label}>
-              <p className="font-serif text-5xl font-light md:text-6xl">{value}</p>
-              <p className="mt-3 text-[10px] leading-5 tracking-widest text-stone-400 uppercase">{label}</p>
+              <p className="font-serif text-5xl font-light text-stone-900 md:text-6xl">{value}</p>
+              <p className="mt-3 text-[10px] leading-5 tracking-widest text-stone-500 uppercase">{label}</p>
             </div>
           ))}
         </div>
-        <p className="mt-10 text-[10px] tracking-widest text-stone-500 uppercase">Figures pending client confirmation.</p>
+        <p className="mt-10 text-[10px] tracking-widest text-stone-400 uppercase">Figures pending client confirmation.</p>
       </div>
     </section>
   )
 }
 
+// Was a full-bleed dark photograph with a black gradient overlay — a third
+// background treatment. It now sits on the shared cream surface, with the
+// showroom photograph kept as a framed image inside the panel so the room still
+// reads without replacing the homepage background.
 function Showroom() {
   return (
-    <section className="relative overflow-hidden bg-stone-950 text-white">
-      <img src={furniture[0].image} alt="ANIKA showroom interior" className="absolute inset-0 h-full w-full object-cover opacity-60" />
-      <div className="absolute inset-0 bg-gradient-to-r from-stone-950/90 via-stone-950/55 to-transparent" />
-      <div className="relative mx-auto max-w-7xl px-6 py-28 md:px-8 md:py-40">
-        <p className="mb-4 text-[10px] tracking-[.3em] text-stone-300 uppercase">05 / Visit us</p>
-        <h2 className="max-w-2xl font-serif text-4xl font-light leading-[.95] tracking-tight md:text-6xl">STEP INTO OUR SHOWROOM</h2>
-        <p className="mt-7 max-w-md text-sm leading-7 text-stone-200">
-          Experience the furniture, materials, finishes and craftsmanship in person before a single piece is made for your space.
-        </p>
-        <a href="#contact" className="mt-10 inline-flex items-center gap-2 border-white/60 bg-white/10 px-6 py-3 text-[10px] tracking-widest uppercase transition hover:border-[#b53029] hover:bg-[#b53029]">
-          Visit Our Showroom <ArrowUpRight size={14} />
-        </a>
+    <section className="relative px-6 py-24 md:px-8 md:py-32">
+      <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2">
+        <div>
+          <p className="mb-4 text-[10px] tracking-[.3em] text-stone-500 uppercase">05 / Visit us</p>
+          <h2 className="max-w-2xl font-serif text-4xl font-light leading-[.95] tracking-tight text-stone-900 md:text-6xl">STEP INTO OUR SHOWROOM</h2>
+          <p className="mt-7 max-w-md text-sm leading-7 text-stone-600">
+            Experience the furniture, materials, finishes and craftsmanship in person before a single piece is made for your space.
+          </p>
+          <a href="#contact" className="mt-10 inline-flex items-center gap-2 border bg-[#b53029] px-6 py-3 text-[10px] tracking-widest text-white uppercase transition hover:border-[#b53029] hover:bg-white hover:text-[#b53029]">
+            Visit Our Showroom <ArrowUpRight size={14} />
+          </a>
+        </div>
+        <img
+          src={furniture[0].image}
+          alt="ANIKA showroom interior"
+          className="h-[320px] w-full rounded-sm object-cover md:h-[460px]"
+        />
       </div>
     </section>
   )
@@ -309,7 +425,7 @@ function Showroom() {
 // Video-first workshop strip. Structure is ready to swap in real TikTok embeds.
 function Workshop() {
   return (
-    <section className="bg-[#fdfcf9]/78 px-6 py-24 md:px-8 md:py-32">
+    <section className="relative px-6 py-24 md:px-8 md:py-32">
       <div className="mx-auto max-w-7xl">
         <Heading label="06 / Follow the craft" title="FROM OUR WORKSHOP" />
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
@@ -348,7 +464,7 @@ function Contact() {
   }
 
   return (
-    <section id="contact" className="bg-[#fdfcf9]/78 px-6 py-24 md:px-12 md:py-32">
+    <section id="contact" className="relative scroll-mt-24 px-6 py-24 md:px-12 md:py-32">
       <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-2">
         <div>
           <Heading label="07 / Contact" title={contact.heading} />
@@ -375,11 +491,11 @@ function Contact() {
               <dd className="mt-1">{contact.hours}</dd>
             </div>
           </dl>
-          <a href="#contact" className="mt-10 inline-flex items-center gap-2 rounded-full bg-stone-900 px-6 py-3 text-[10px] tracking-widest text-white uppercase transition hover:bg-[#b53029]">
+          <a href="#contact" className="mt-10 inline-flex items-center gap-2 rounded-sm bg-[#b53029] px-6 py-3 text-[10px] tracking-widest text-white uppercase transition hover:bg-stone-900">
             Contact Us <ArrowUpRight size={14} />
           </a>
         </div>
-        <form onSubmit={submit} className="rounded-2xl border-stone-200 bg-white/90 p-7 shadow-sm">
+        <form onSubmit={submit} className="rounded-sm border border-stone-900/10 bg-[rgba(253,252,249,.35)] p-7">
           <div className="grid gap-5 sm:grid-cols-2">
             {(['name', 'email'] as const).map((field) => (
               <label key={field} className="text-xs text-stone-500 capitalize">
@@ -389,7 +505,7 @@ function Contact() {
                   type={field === 'email' ? 'email' : 'text'}
                   value={form[field]}
                   onChange={(event) => setForm({ ...form, [field]: event.target.value })}
-                  className="mt-2 w-full border-b border-stone-300 py-3 outline-none focus:border-[#b53029]"
+                  className="mt-2 w-full border-b border-stone-900/20 bg-transparent py-3 outline-none focus:border-[#b53029]"
                 />
               </label>
             ))}
@@ -399,7 +515,7 @@ function Contact() {
             <select
               value={form.category}
               onChange={(event) => setForm({ ...form, category: event.target.value })}
-              className="mt-2 w-full border-b border-stone-300 py-3 outline-none"
+              className="mt-2 w-full appearance-none border-b border-stone-900/20 bg-transparent py-3 outline-none focus:border-[#b53029]"
             >
               <option>Choose a category</option>
               {furniture.map((item) => <option key={item.title}>{item.title}</option>)}
@@ -411,10 +527,10 @@ function Contact() {
               rows={4}
               value={form.details}
               onChange={(event) => setForm({ ...form, details: event.target.value })}
-              className="mt-2 w-full border-b border-stone-300 py-3 outline-none"
+              className="mt-2 w-full border-b border-stone-900/20 bg-transparent py-3 outline-none focus:border-[#b53029]"
             />
           </label>
-          <button type="submit" className="mt-8 inline-flex items-center gap-2 rounded-full bg-stone-900 px-6 py-3 text-[10px] tracking-widest text-white uppercase transition hover:bg-[#b53029]">
+          <button type="submit" className="mt-8 inline-flex items-center gap-2 rounded-sm bg-[#b53029] px-6 py-3 text-[10px] tracking-widest text-white uppercase transition hover:bg-stone-900">
             <Send size={14} /> Send Inquiry
           </button>
           {sent && <p className="mt-4 text-xs text-stone-600">Thank you — we will be in touch shortly.</p>}
@@ -433,18 +549,18 @@ function Footer() {
     ['Categories', ['Sofas', 'Beds', 'Dining', 'Tables']],
   ]
   return (
-    <footer className="bg-stone-950 px-6 py-16 text-stone-400 md:px-8">
+    <footer className="relative px-6 py-16 md:px-8">
       <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-4">
         {groups.map(([title, links]) => (
           <div key={title}>
-            <h3 className="text-[10px] tracking-widest text-white uppercase">{title}</h3>
+            <h3 className="text-[10px] tracking-widest text-stone-900 uppercase">{title}</h3>
             {links.map((link) => <p className="mt-4 text-sm" key={link}>{link}</p>)}
           </div>
         ))}
         <div>
-          <h3 className="text-[10px] tracking-widest text-white uppercase">Newsletter</h3>
+          <h3 className="text-[10px] tracking-widest text-stone-900 uppercase">Newsletter</h3>
           <form
-            className="mt-5 flex border-b border-stone-700"
+            className="mt-5 flex border-b border-stone-900/20"
             onSubmit={(event) => { event.preventDefault(); if (email.trim()) setSubscribed(true) }}
           >
             <input
@@ -456,14 +572,14 @@ function Footer() {
               aria-label="Your email"
               className="w-full bg-transparent py-3 outline-none"
             />
-            <button type="submit" aria-label="Subscribe" className="mt-3 text-stone-400 transition hover:text-white">
+            <button type="submit" aria-label="Subscribe" className="mt-3 text-stone-500 transition hover:text-[#b53029]">
               <ArrowUpRight size={18} />
             </button>
           </form>
           {subscribed && <p className="mt-3 text-xs text-stone-500">Thanks for subscribing.</p>}
         </div>
       </div>
-      <div className="mx-auto mt-14 flex max-w-7xl flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6 text-[10px] tracking-widest text-stone-500 uppercase">
+      <div className="mx-auto mt-14 flex max-w-7xl flex-wrap items-center justify-between gap-4 border-t border-stone-900/10 pt-6 text-[10px] tracking-widest text-stone-500 uppercase">
         <p>© {new Date().getFullYear()} NIKA Furniture & Wood Work</p>
         <p>{contact.location}</p>
       </div>
@@ -473,13 +589,13 @@ function Footer() {
 
 export function App() {
   return (
-    <div className="site-shell bg-[#fdfcf9]/70 text-stone-900">
+    <div className="site-shell text-stone-900">
       <BrandCursor />
       <Header />
       <main>
         <Hero />
         <Signature />
-        <LatestCreations />
+        <NewArrivals />
         <Craftsmanship />
         <Achievements />
         <Showroom />

@@ -236,5 +236,5 @@ export function ParticleScene() {
     }
   }, [])
 
-  return <canvas className="particle-scene" ref={canvasRef} aria-hidden="true" />
+  return <canvas id="particle-canvas" className="particle-scene" ref={canvasRef} aria-hidden="true" />
 }
